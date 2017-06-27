@@ -89,7 +89,7 @@
         "supertest": "^3.0.0",
         "ts-jest": "^20.0.6",
         "tslint": "^5.4.3",
-        "typescript": "^2.4.0"
+        "typescript": "^2.4.1"
     },
     "jest": {
         "transform": {
