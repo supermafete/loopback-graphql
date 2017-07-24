@@ -4,6 +4,7 @@ import {
   getId,
   connectionTypeName,
   idToCursor,
+  checkACL,
 } from './utils';
 
 function buildSelector(model, args) {
@@ -31,15 +32,22 @@ function buildSelector(model, args) {
 }
 
 function findOne(model, obj, args, context) {
+  const accessToken = context.query.access_token;
   let id = obj ? obj[model.getIdName()] : args.id;
-  return model.findById(id);
+
+  return checkACL({
+    accessToken: accessToken,
+    model: model.definition.name,
+    modelId: id,
+    method: 'READ',
+  }, model, model.findById(id));
 }
 
 function getCount(model, obj, args, context) {
   return model.count(args.where);
 }
 
-function getFirst(model, obj, args) {
+function getFirst(model, obj, args, context) {
   return model.findOne({
     order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
     where: args.where,
@@ -49,8 +57,14 @@ function getFirst(model, obj, args) {
     });
 }
 
-function getList(model, obj, args) {
-  return model.find(buildSelector(model, args));
+function getList(model, obj, args, context) {
+  const accessToken = context.query.access_token;
+  return checkACL({
+    accessToken: accessToken,
+    model: model.definition.name,
+    modelId: '',
+    method: 'READ',
+  }, model, model.find(buildSelector(model, args)));
 }
 
 function findAll(model: any, obj: any, args: any, context: any) {
@@ -60,14 +74,14 @@ function findAll(model: any, obj: any, args: any, context: any) {
     first: undefined,
     list: undefined,
   };
-  return getCount(model, obj, args, undefined)
+  return getCount(model, obj, args, context)
     .then(count => {
       response.count = count;
-      return getFirst(model, obj, args);
+      return getFirst(model, obj, args, context);
     })
     .then(first => {
       response.first = first;
-      return getList(model, obj, args);
+      return getList(model, obj, args, context);
     })
     .then(list => {
       response.list = list;
