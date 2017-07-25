@@ -1,51 +1,55 @@
 {
-    "name": "Note",
-    "properties": {
-        "title": {
-            "type": "string",
-            "required": true
-        },
-        "content": {
-            "type": "Content"
-        },
-        "Genre": {
-            "type": "string",
-            "required": false,
-            "enum": [
-                "HUMOR",
-                "SCI_FI",
-                "HORROR",
-                "ROMANCE",
-                "NON_FICTION"
-            ]
-        },
-        "location": {
-            "type": "GeoPoint"
-        }
+  "name": "Note",
+  "properties": {
+    "title": {
+      "type": "string",
+      "required": true
     },
-    "validations": [],
-    "relations": {
-        "author": {
-            "type": "belongsTo",
-            "model": "Author",
-            "foreignKey": ""
-        }
+    "content": {
+      "type": "Content"
     },
-    "acls": [],
-    "methods": {
-        "prototype.vote": {
-            "accepts": [{
-                "arg": "rank",
-                "type": "number",
-                "required": true,
-                "description": ""
-            }],
-            "returns": [],
-            "description": " vote  a note",
-            "http": [{
-                "path": "vote",
-                "verb": "post"
-            }]
-        }
+    "Genre": {
+      "type": "string",
+      "required": false,
+      "enum": [
+        "HUMOR",
+        "SCI_FI",
+        "HORROR",
+        "ROMANCE",
+        "NON_FICTION"
+      ]
+    },
+    "location": {
+      "type": "GeoPoint"
     }
+  },
+  "validations": [],
+  "relations": {
+    "author": {
+      "type": "belongsTo",
+      "model": "Author",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {
+    "prototype.vote": {
+      "accepts": [
+        {
+          "arg": "rank",
+          "type": "number",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "returns": [],
+      "description": " vote  a note",
+      "http": [
+        {
+          "path": "vote",
+          "verb": "post"
+        }
+      ]
+    }
+  }
 }

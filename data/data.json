@@ -1,7 +1,7 @@
 {
   "ids": {
-    "User": 3,
-    "AccessToken": 1,
+    "User": 4,
+    "AccessToken": 2,
     "ACL": 1,
     "RoleMapping": 1,
     "Role": 1,
@@ -18,9 +18,12 @@
   "models": {
     "User": {
       "1": "{\"username\":\"tally\",\"password\":\"$2a$10$b/Ok3FC3HYCbF2LlLXpk4OSsrz5EixJfkfJittHp8eEtPQvUJZiEa\",\"email\":\"tally@a.com\",\"id\":1}",
-      "2": "{\"username\":\"naveenmeher\",\"password\":\"$2a$10$tT5y2RfVUdaZvt6iVtDoUeub9WqoqLk40WF5rq4QxQFLJ4bZzzgrO\",\"email\":\"naveenmeher07@gmail.com\",\"id\":2}"
+      "2": "{\"username\":\"naveenmeher\",\"password\":\"$2a$10$tT5y2RfVUdaZvt6iVtDoUeub9WqoqLk40WF5rq4QxQFLJ4bZzzgrO\",\"email\":\"naveenmeher07@gmail.com\",\"id\":2}",
+      "3": "{\"username\":\"test\",\"password\":\"$2a$10$oIgsZ0YN1gizGoSGyYwvNugN7XmHAyDBLZd0AXGs3wSW1QOzFEIQm\",\"email\":\"string@email.com\",\"emailVerified\":false,\"id\":3}"
     },
-    "AccessToken": {},
+    "AccessToken": {
+      "v6XTosnrKBvAP7IUul2mK9oCwPYNl3R2TYo10UhhO4DyjKDdvHgCrSV5C9JGYHwu": "{\"id\":\"v6XTosnrKBvAP7IUul2mK9oCwPYNl3R2TYo10UhhO4DyjKDdvHgCrSV5C9JGYHwu\",\"ttl\":1209600,\"created\":\"2017-07-25T08:34:05.147Z\",\"userId\":3}"
+    },
     "ACL": {},
     "RoleMapping": {},
     "Role": {},
