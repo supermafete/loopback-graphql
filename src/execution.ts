@@ -39,7 +39,8 @@ function findOne(model, obj, args, context) {
     accessToken: accessToken,
     model: model.definition.name,
     modelId: id,
-    method: 'READ',
+    method: '',
+    accessType: 'READ',
   }, model, model.findById(id));
 }
 
@@ -63,7 +64,8 @@ function getList(model, obj, args, context) {
     accessToken: accessToken,
     model: model.definition.name,
     modelId: '',
-    method: 'READ',
+    method: '',
+    accessType: 'READ',
   }, model, model.find(buildSelector(model, args)));
 }
 
@@ -74,7 +76,8 @@ function upsert(model, args, context) {
     accessToken: accessToken,
     model: model.definition.name,
     modelId: '',
-    method: 'EXECUTE',
+    method: '*',
+    accessType: 'WRITE',
   }, model, model.upsert(args.obj));
 }
 

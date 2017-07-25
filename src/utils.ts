@@ -70,7 +70,7 @@ function methodName(method, model) {
 function checkACL(params, modelObject, resObject) {
   const AccessToken = modelObject.app.models.AccessToken;
   const notAllowedPromise = new Promise((resolve, reject) => {
-    reject({data: 'Not allowed'});
+    resolve('Not allowed');
   });
   const ACL = modelObject.app.models.ACL;
   const debug = require('debug')('loopback:security:acl');
@@ -78,86 +78,205 @@ function checkACL(params, modelObject, resObject) {
   debug('[GraphQL] Checking ACLs');
 
   return new Promise((resolve, reject) => {
-    // check permission
-    ACL.checkPermission('ROLE', '$everyone', modelObject.definition.name, 'id', '*', (e, r) => {
-      // if allow everyone or allow unauthenticated then resolve
-      if (r.permission === 'ALLOW') {
-        resolve(resObject);
-        debug('[GraphQL] Allowed for everyone');
-      } else {
-        debug('[GraphQL] Not allowed for everyone. Checking ACLs.');
-        AccessToken.resolve(params.accessToken, (atErr, atRes) => {
-          const accessTokenObject = atRes;
-          if (!accessTokenObject || atErr) {
-            debug('[GraphQL] No access token received');
-            resolve(notAllowedPromise);
-          } else {
-            debug('[GraphQL] Access token resolved');
-            const promises = [];
-            ACL.checkAccessForToken(accessTokenObject, params.model, params.modelId, params.method, (accessErr, accessRes) => {
-              debug('[GraphQL] Check access for token');
-              if (accessErr) {
-                resolve(notAllowedPromise);
-                debug('[GraphQL] Access for token denied');
-              } else {
-                debug('[GraphQL] Doing checks');
-                resObject.then((data) => {
-                  // Iterate over properties to check access.
-                  // Probably better if we only iterate over the DENIED properties defined in ACL
-                  // but I don't know how to access them... yet.
-                  for (const property in modelObject.definition.properties) {
-                    if (modelObject.definition.properties.hasOwnProperty(property)) {
-                      promises.push(
-                        // bug in loopback/common/models/acl.js(245) 'break left'.
-                        // When accessType is a wildcard, checkPermission is incorrectly resolved.
-                        // This is why I'm setting accessType to READ or WRITE. You can set accessType to
-                        // '*' if you put the break in loopback/common/models/acl.js. Seems that loopback's admin
-                        // needs more time to measure the impact of that break to accept the PR.
-                        // https://github.com/strongloop/loopback/pull/3293
+    AccessToken.resolve(params.accessToken, (atErr, atRes) => {
+      let role = 'everyone';
+      if (atErr || !atRes) {
+        role = '$unauthenticated';
+      } else if (atRes) {
+        role = '$authenticated';
+      }
+      debug('[GraphQL] Using role ' + role);
 
-                        // TODO role not hardcoded here please
-                        ACL.checkPermission('ROLE', '$authenticated', modelObject.definition.name, property, params.method,
-                        (checkPermissionErr, checkPermissionRes) => {
-                          if (checkPermissionRes.permission === 'DENY') {
-                            debug('[GraphQL] Denied access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+      resObject.then((data) => {
+        const promises = [];
+        for (let property in modelObject.definition.properties) {
+          if (modelObject.definition.properties.hasOwnProperty(property)) {
+            promises.push(
+              ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType,
+              (checkPermissionErr, checkPermissionRes) => {
+                if (checkPermissionRes.permission === 'DENY') {
+                  data[property] = null;
+                }
+              }),
+            );
 
-                            if (Array.isArray(data)) {
-                              data.map((elem) => {
-                                elem[property] = [ 'N/A' ];
-                              });
-                            } else {
-                              data[property] = 'N/A';
-                            }
-                          } else {
-                            // do nothing with data
-                          }
-                        }),
-                      );
-                    }
-                  }
-
-                  Promise.all(promises).then((v) => {
-                    resolve(new Promise((modifiedResponse) => {
-                      modifiedResponse(data);
-                    }));
-                  });
-                });
-              }
+            Promise.all(promises).then((v) => {
+              resolve(new Promise((modifiedResponse) => {
+                modifiedResponse(data);
+              }));
             });
           }
-        });
-      }
-
-    // else check access token and resolve
+        }
+      });
+    });
   });
-});
+
+//   return new Promise((resolve, reject) => {
+//     // check permission
+//     ACL.checkPermission('ROLE', '$everyone', modelObject.definition.name, '*', 'READ', (e, r) => {
+//       // if allow everyone or allow unauthenticated then resolve
+//       if (r.permission === 'ALLOW') {
+//         const promises = [];
+//         resolve(resObject);
+//         debug('[GraphQL] Allowed for everyone: ' + modelObject.definition.name);
+//
+//         resObject.then((data) => {
+//           // Iterate over properties to check access.
+//           // Probably better if we only iterate over the DENIED properties defined in ACL
+//           // but I don't know how to access them... yet.
+//           for (const property in modelObject.definition.properties) {
+//             if (modelObject.definition.properties.hasOwnProperty(property)) {
+//               promises.push(
+//                 // bug in loopback/common/models/acl.js(245) 'break left'.
+//                 // When accessType is a wildcard, checkPermission is incorrectly resolved.
+//                 // This is why I'm setting accessType to READ or WRITE. You can set accessType to
+//                 // '*' if you put the break in loopback/common/models/acl.js. Seems that loopback's admin
+//                 // needs more time to measure the impact of that break to accept the PR.
+//                 // https://github.com/strongloop/loopback/pull/3293
+//
+//                 // TODO role not hardcoded here please
+//                 ACL.checkPermission('ROLE', '$everyone', modelObject.definition.name, property, params.accessType,
+//                 (checkPermissionErr, checkPermissionRes) => {
+//                   if (checkPermissionRes.permission === 'DENY') {
+//                     debug('[GraphQL] Denied access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+//
+//                     data[property] = null;
+//                     // if (Array.isArray(data)) {
+//                     //   data.map((elem) => {
+//                     //     elem[property] = [ 'N/A' ];
+//                     //   });
+//                     // } else {
+//                     //   data[property] = 'N/A';
+//                     // }
+//                   } else {
+//                     debug('[GraphQL] Granted access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+//                   }
+//                 }),
+//               );
+//             }
+//           }
+//
+//           Promise.all(promises).then((v) => {
+//             resolve(new Promise((modifiedResponse) => {
+//               modifiedResponse(data);
+//             }));
+//           });
+//         });
+//       } else {
+//         const promises = [];
+//         debug('[GraphQL] Not allowed for everyone. Checking ACLs.');
+//         AccessToken.resolve(params.accessToken, (atErr, atRes) => {
+//           const accessTokenObject = atRes;
+//           if (!accessTokenObject || atErr) {
+//             debug('[GraphQL] No access token received');
+//             reject('Invalid access token');
+//           } else {
+//             debug('[GraphQL] Access token resolved');
+//             ACL.checkAccessForToken(accessTokenObject, params.model, params.modelId, params.accessType, (accessErr, accessRes) => {
+//               debug('[GraphQL] Check access for token');
+//               if (accessErr) {
+//                 resolve(notAllowedPromise);
+//                 debug('[GraphQL] Access for token denied');
+//               } else {
+//                 debug('[GraphQL] Doing checks');
+//                 resObject.then((data) => {
+//                   // Iterate over properties to check access.
+//                   // Probably better if we only iterate over the DENIED properties defined in ACL
+//                   // but I don't know how to access them... yet.
+//                   for (const property in modelObject.definition.properties) {
+//                     if (modelObject.definition.properties.hasOwnProperty(property)) {
+//                       promises.push(
+//                         // bug in loopback/common/models/acl.js(245) 'break left'.
+//                         // When accessType is a wildcard, checkPermission is incorrectly resolved.
+//                         // This is why I'm setting accessType to READ or WRITE. You can set accessType to
+//                         // '*' if you put the break in loopback/common/models/acl.js. Seems that loopback's admin
+//                         // needs more time to measure the impact of that break to accept the PR.
+//                         // https://github.com/strongloop/loopback/pull/3293
+//
+//                         // TODO role not hardcoded here please
+//                         ACL.checkPermission('ROLE', '$authenticated', modelObject.definition.name, property, params.method,
+//                         (checkPermissionErr, checkPermissionRes) => {
+//                           if (checkPermissionRes.permission === 'DENY') {
+//                             debug('[GraphQL] Denied access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+//
+//                             data[property] = null;
+//                             // if (Array.isArray(data)) {
+//                             //   data.map((elem) => {
+//                             //     elem[property] = [ 'N/A' ];
+//                             //   });
+//                             // } else {
+//                             //   data[property] = 'N/A';
+//                             // }
+//                           } else {
+//                             debug('[GraphQL] Granted access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+//                           }
+//                         }),
+//                       );
+//                     }
+//                   }
+//
+//                   Promise.all(promises).then((v) => {
+//                     resolve(new Promise((modifiedResponse) => {
+//                       modifiedResponse(data);
+//                     }));
+//                   });
+//                 });
+//               }
+//             });
+//           }
+//         });
+//       }
+//
+//     // else check access token and resolve
+//   });
+// });
 
   // return new Promise((resolve, reject) => {
   //   AccessToken.resolve(params.accessToken, (atErr, atRes) => {
   //     const accessTokenObject = atRes;
   //     if (!accessTokenObject || atErr) {
-  //       resolve(notAllowedPromise);
-  //     } else {
+  //       const promises = [];
+  //       debug('[GraphQL] Doing checks');
+  //       resObject.then((data) => {
+  //         // Iterate over properties to check access.
+  //         // Probably better if we only iterate over the DENIED properties defined in ACL
+  //         // but I don't know how to access them... yet.
+  //         for (const property in modelObject.definition.properties) {
+  //           if (modelObject.definition.properties.hasOwnProperty(property)) {
+  //             promises.push(
+  //               // bug in loopback/common/models/acl.js(245) 'break left'.
+  //               // When accessType is a wildcard, checkPermission is incorrectly resolved.
+  //               // This is why I'm setting accessType to READ or WRITE. You can set accessType to
+  //               // '*' if you put the break in loopback/common/models/acl.js. Seems that loopback's admin
+  //               // needs more time to measure the impact of that break to accept the PR.
+  //               // https://github.com/strongloop/loopback/pull/3293
+  //
+  //               // TODO role not hardcoded here please
+  //               ACL.checkPermission('ROLE', '$everyone', modelObject.definition.name, property, params.accessType, (e, r) => {
+  //                 if (r.permission === 'DENY') {
+  //                   debug('[GraphQL] Denied access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
+  //
+  //                   if (Array.isArray(data)) {
+  //                     data.map((elem) => {
+  //                       elem[property] = null;
+  //                     });
+  //                   } else {
+  //                     data[property] = null;
+  //                   }
+  //                 } else {
+  //                   // do nothing with data
+  //                 }
+  //               }),
+  //             );
+  //           }
+  //         }
+  //
+  //         Promise.all(promises).then((v) => {
+  //           resolve(new Promise((modifiedResponse) => {
+  //             modifiedResponse(data);
+  //           }));
+  //         });
+  //       });      } else {
   //       debug('[GraphQL] Access token resolved');
   //       const promises = [];
   //       ACL.checkAccessForToken(accessTokenObject, params.model,  params.modelId, params.method, (accessErr, accessRes) => {
@@ -182,7 +301,7 @@ function checkACL(params, modelObject, resObject) {
   //                   // https://github.com/strongloop/loopback/pull/3293
   //
   //                   // TODO role not hardcoded here please
-  //                   ACL.checkPermission('ROLE', '$authenticated', modelObject.definition.name, property, params.method, (e, r) => {
+  //                   ACL.checkPermission('ROLE', '$authenticated', modelObject.definition.name, property, params.accessType, (e, r) => {
   //                     if (r.permission === 'DENY') {
   //                       debug('[GraphQL] Denied access to ' + modelObject.definition.name + '.' + property + ' due to ACL');
   //
