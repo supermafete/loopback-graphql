@@ -73,6 +73,9 @@ function checkACL(params, modelObject, resObject) {
     reject('Not allowed');
   });
   const ACL = modelObject.app.models.ACL;
+  const debug = require('debug')('loopback:security:acl');
+
+  debug('[GraphQL] Checking ACLs');
 
   return new Promise((resolve, reject) => {
     AccessToken.resolve(params.accessToken, (atErr, atRes) => {
@@ -80,16 +83,19 @@ function checkACL(params, modelObject, resObject) {
       if (!accessTokenObject || atErr) {
         resolve(notAllowedPromise);
       } else {
+        debug('[GraphQL] Access token resolved');
         const promises = [];
         ACL.checkAccessForToken(accessTokenObject, params.model,  params.modelId, params.method, (accessErr, accessRes) => {
+          debug('[GraphQL] Check access for token');
           if (accessErr) {
             resolve(notAllowedPromise);
+            debug('[GraphQL] Access for token denied');
           } else {
+            debug('[GraphQL] Doing checks');
             resObject.then((data) => {
               // Iterate over properties to check access.
               // Probably better if we only iterate over the DENIED properties defined in ACL
               // but I don't know how to access them... yet.
-              const debug = require('debug')('loopback:security:acl');
               for (const property in modelObject.definition.properties) {
                 if (modelObject.definition.properties.hasOwnProperty(property)) {
                   promises.push(

@@ -39,7 +39,7 @@ function rootResolver(model) {
     },
     Mutation: {
       [`save${utils.singularModelName(model)}`]: (context, args) => {
-        return model.upsert(args.obj);
+        return execution.upsert(model, args, context);
       },
       [`delete${utils.singularModelName(model)}`]: (context, args) => {
         return model.findById(args.id)

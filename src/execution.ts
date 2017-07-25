@@ -67,6 +67,17 @@ function getList(model, obj, args, context) {
   }, model, model.find(buildSelector(model, args)));
 }
 
+function upsert(model, args, context) {
+  const accessToken = context.query.access_token;
+  console.log("UPSERT", accessToken);
+  return checkACL({
+    accessToken: accessToken,
+    model: model.definition.name,
+    modelId: '',
+    method: 'EXECUTE',
+  }, model, model.upsert(args.obj));
+}
+
 function findAll(model: any, obj: any, args: any, context: any) {
   const response = {
     args: args,
@@ -144,4 +155,5 @@ export {
   findOne,
   findRelated,
   resolveConnection,
+  upsert,
 };
