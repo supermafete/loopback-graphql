@@ -94,6 +94,7 @@ function checkACL(params, modelObject, resObject) {
             promises.push(
               ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType,
               (checkPermissionErr, checkPermissionRes) => {
+                debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission);
                 if (checkPermissionRes.permission === 'DENY') {
                   data[property] = null;
                 }
