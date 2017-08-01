@@ -71,7 +71,6 @@ function getList(model, obj, args, context) {
 
 function upsert(model, args, context) {
   const accessToken = context.query.access_token;
-  console.log("UPSERT", accessToken);
   return checkACL({
     accessToken: accessToken,
     model: model.definition.name,

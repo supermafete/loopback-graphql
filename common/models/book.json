@@ -35,9 +35,16 @@
     {
       "accessType": "READ",
       "principalType": "ROLE",
-      "principalId": "$authenticated",
+      "principalId": "$unauthenticated",
       "permission": "ALLOW",
       "property": "id"
+    },
+    {
+      "accessType": "READ",
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "*"
     }
   ],
   "methods": {}

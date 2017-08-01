@@ -88,6 +88,7 @@ function checkACL(params, modelObject, resObject) {
       debug('[GraphQL] Using role ' + role);
 
       resObject.then((data) => {
+        console.log('DATA', data);
         const promises = [];
         for (let property in modelObject.definition.properties) {
           if (modelObject.definition.properties.hasOwnProperty(property)) {
@@ -96,7 +97,13 @@ function checkACL(params, modelObject, resObject) {
               (checkPermissionErr, checkPermissionRes) => {
                 debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission);
                 if (checkPermissionRes.permission === 'DENY') {
-                  data[property] = null;
+                  if (Array.isArray(data)) {
+                     data.map((elem) => {
+                       elem[property] = ['N/A'];
+                     });
+                   } else {
+                     data[property] = ['N/A'];
+                   }
                 }
               }),
             );

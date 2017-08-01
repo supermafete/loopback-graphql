@@ -1,14 +1,14 @@
 {
   "ids": {
     "User": 4,
-    "AccessToken": 6,
+    "AccessToken": 7,
     "ACL": 1,
     "RoleMapping": 1,
     "Role": 1,
     "Note": 8,
     "Author": 4,
     "Reader": 2,
-    "Book": 2,
+    "Book": 3,
     "Customer": 8,
     "Address": 1,
     "EmailAddress": 1,
@@ -26,7 +26,8 @@
       "0e2sJnI4tpXomtkEFrVqnDIc1dC8ZXbSOEd5znt7J7p0vWijlUJQQYvGBPgmBMHr": "{\"id\":\"0e2sJnI4tpXomtkEFrVqnDIc1dC8ZXbSOEd5znt7J7p0vWijlUJQQYvGBPgmBMHr\",\"ttl\":1209600,\"created\":\"2017-07-25T14:33:59.108Z\",\"userId\":3}",
       "TDBasFKwMRt47mm9bhzSOOs21XVJwB6Ccfc6laxuEdnwggVIZNZsCSfS2VZXRFzc": "{\"id\":\"TDBasFKwMRt47mm9bhzSOOs21XVJwB6Ccfc6laxuEdnwggVIZNZsCSfS2VZXRFzc\",\"ttl\":1209600,\"created\":\"2017-07-25T14:34:41.396Z\",\"userId\":3}",
       "tuBqvBxTCema5XzyuzdLryFt4pEWA5YOC0SDSQKJ1FCGTxiZkBOQtySFrZWraaFS": "{\"id\":\"tuBqvBxTCema5XzyuzdLryFt4pEWA5YOC0SDSQKJ1FCGTxiZkBOQtySFrZWraaFS\",\"ttl\":1209600,\"created\":\"2017-07-25T14:55:11.166Z\",\"userId\":3}",
-      "x44MNBD9VFZkzuaqAQmn7w2vXmeDN7K2fN7S4diIXs4bscRcy4qnGLNtRPgZteaR": "{\"id\":\"x44MNBD9VFZkzuaqAQmn7w2vXmeDN7K2fN7S4diIXs4bscRcy4qnGLNtRPgZteaR\",\"ttl\":1209600,\"created\":\"2017-07-25T15:22:15.737Z\",\"userId\":3}"
+      "x44MNBD9VFZkzuaqAQmn7w2vXmeDN7K2fN7S4diIXs4bscRcy4qnGLNtRPgZteaR": "{\"id\":\"x44MNBD9VFZkzuaqAQmn7w2vXmeDN7K2fN7S4diIXs4bscRcy4qnGLNtRPgZteaR\",\"ttl\":1209600,\"created\":\"2017-07-25T15:22:15.737Z\",\"userId\":3}",
+      "O0m3AzF6hjNIPEMUVqDHHiGJhiJXOcowjkowF5ZbBMgoZGywEmJOQZnD6vOHBr1Z": "{\"id\":\"O0m3AzF6hjNIPEMUVqDHHiGJhiJXOcowjkowF5ZbBMgoZGywEmJOQZnD6vOHBr1Z\",\"ttl\":1209600,\"created\":\"2017-08-01T09:34:24.425Z\",\"userId\":3}"
     },
     "ACL": {},
     "RoleMapping": {},
@@ -47,7 +48,8 @@
       "1": "{\"name\":\"Reader 1\",\"id\":1}"
     },
     "Book": {
-      "1": "{\"name\":\"Book 1\",\"links\":[{\"id\":1,\"name\":\"Author 1\",\"notes\":\"Note 1\",\"linkedId\":1,\"linkedType\":\"Author\"},{\"id\":2,\"name\":\"Reader 1\",\"notes\":\"Note 2\",\"linkedId\":1,\"linkedType\":\"Reader\"}],\"id\":1}"
+      "1": "{\"name\":\"Book 1\",\"links\":[{\"id\":1,\"name\":\"Author 1\",\"notes\":\"Note 1\",\"linkedId\":1,\"linkedType\":\"Author\"},{\"id\":2,\"name\":\"Reader 1\",\"notes\":\"Note 2\",\"linkedId\":1,\"linkedType\":\"Reader\"}],\"id\":1}",
+      "2": "{\"name\":\"Book 2\",\"links\":[],\"id\":2}"
     },
     "Order": {
       "1": "{\"date\":\"2014-12-31T18:30:00.000Z\",\"description\":\"First order by Customer A\",\"customerId\":1,\"id\":1}",
