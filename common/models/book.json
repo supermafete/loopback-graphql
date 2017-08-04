@@ -42,6 +42,13 @@
     {
       "accessType": "READ",
       "principalType": "ROLE",
+      "principalId": "$unauthenticated",
+      "permission": "ALLOW",
+      "property": "links"
+    },
+    {
+      "accessType": "READ",
+      "principalType": "ROLE",
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "property": "*"
