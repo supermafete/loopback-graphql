@@ -1,7 +1,7 @@
 {
-  "name": "loopback-graphql",
-  "version": "0.13.0",
-  "description": "Add Apollo Server or GraphQL queries on your Loopback server",
+  "name": "loopback-graphql-checkacl",
+  "version": "0.13.0-acl",
+  "description": "Add Apollo Server or GraphQL queries on your Loopback server with ACL capabilities",
   "main": "dist/index.js",
   "directories": {
     "test": "test"
@@ -35,12 +35,12 @@
     "REST",
     "APIs"
   ],
-  "author": "Tally Barak <tally.barak@gmail.com>",
+  "author": "Miguel Angel Flores <miguel@alt17.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tallyb/loopback-graphql/issues"
+    "url": "https://github.com/supermafete/loopback-graphql"
   },
-  "homepage": "https://github.com/tallyb/loopback-graphql#readme",
+  "homepage": "https://github.com/supermafete/loopback-graphql#readme",
   "dependencies": {
     "body-parser": "^1.17.1",
     "graphql": "^0.9.6",
