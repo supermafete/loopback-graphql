@@ -23,7 +23,7 @@
     "release": "standard-version"
   },
   "repository": {
-    "url": "git+https://github.com/tallyb/loopback-graphql.git",
+    "url": "git+https://github.com/supermafete/loopback-graphql.git",
     "type": "git"
   },
   "keywords": [
