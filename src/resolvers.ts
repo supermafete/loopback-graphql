@@ -67,7 +67,7 @@ function connectionResolver(model: any) {
         });
       },
 
-      [model.pluralModelName]: (obj, args, context) => {
+      [model.pluralModelName.toLowerCase()]: (obj, args, context) => {
         return obj.list;
       },
 

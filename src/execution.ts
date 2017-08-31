@@ -98,11 +98,23 @@ function findAll(model: any, obj: any, args: any, context: any) {
     })
     .then(list => {
       response.list = list;
-      return response;
+      return response.list;
     });
 }
 
 function findRelated(rel, obj, args, context) {
+  if (rel.type === 'hasOne') {
+    args.id = obj[rel.keyTo];
+    return findOne(rel.modelTo, null, args, context);
+  }
+  if (rel.type === 'hasMany') {
+    const keyTo = rel.keyTo;
+    const id = obj.id;
+    args.where = {};
+    args.where[keyTo] = id;
+
+    return findAll(rel.modelTo, obj, args, context);
+  }
   if (_.isArray(obj[rel.keyFrom])) {
     return [];
   }
@@ -110,8 +122,8 @@ function findRelated(rel, obj, args, context) {
     [rel.keyTo]: obj[rel.keyFrom],
   };
   return findAll(rel.modelTo, obj, args, context);
-
 }
+
 
 function resolveConnection(model) {
   return {

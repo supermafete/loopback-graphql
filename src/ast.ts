@@ -128,15 +128,39 @@ function mapProperty(model: any, property: any, modelName: string, propertyName:
 }
 
 function mapRelation(rel: any, modelName: string, relName: string) {
-  types[modelName].fields[relName] = {
-    relation: true,
-    embed: rel.embed,
-    gqlType: connectionTypeName(rel.modelTo),
-    args: PAGINATION,
-    resolver: (obj, args, context) => {
-      return findRelated(rel, obj, args, context);
-    },
-  };
+  const relNamePlural = relName + 's';
+  if (rel.type === 'hasOne') {
+    types[modelName].fields[relName] = {
+      relation: true,
+      embed: rel.embed,
+      gqlType: rel.modelTo.modelName,
+      args: PAGINATION,
+      resolver: (obj, args, context) => {
+        return findRelated(rel, obj, args, context);
+      },
+    };
+  } else if (rel.type === 'hasMany') {
+      types[modelName].fields[relName] = {
+        relation: true,
+        embed: rel.embed,
+        list: true,
+        gqlType: [rel.modelTo.modelName],
+        args: PAGINATION,
+        resolver: (obj, args, context) => {
+          return findRelated(rel, obj, args, context);
+        },
+      };
+  } else {
+    types[modelName].fields[relName] = {
+      relation: true,
+      embed: rel.embed,
+      gqlType: connectionTypeName(rel.modelTo),
+      args: PAGINATION,
+      resolver: (obj, args, context) => {
+        return findRelated(rel, obj, args, context);
+      },
+    };
+  }
 }
 
 /*
@@ -224,7 +248,8 @@ function mapRoot(model) {
     relation: true,
     root: true,
     args: PAGINATION,
-    gqlType: connectionTypeName(model),
+    list: true,
+    gqlType: singularModelName(model),
     resolver: (obj, args, context) => {
       findAll(model, obj, args, context);
     },
@@ -293,7 +318,7 @@ function mapConnection(model) {
           return obj.count;
         },
       },
-      [model.pluralModelName]: {
+      [model.pluralModelName.toLowerCase()]: {
         gqlType: singularModelName(model),
         list: true,
         resolver: (obj, args, context) => {
