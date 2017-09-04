@@ -15,11 +15,12 @@ function buildSelector(model, args) {
   };
   const begin = getId(args.after);
   const end = getId(args.before);
+  const orderBy = args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC');
 
   // selector.skip = args.first - args.last || 0;
   selector.skip = args.skip || 0;
   selector.limit = args.last || args.first;
-  selector.order = args.orderBy || (model.getIdName() + (end ? ' DESC' : ' ASC'));
+  selector.order =  orderBy || (model.getIdName() + (end ? ' DESC' : ' ASC'));
   if (begin) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].gt = begin;
@@ -91,7 +92,7 @@ function findAll(model: any, obj: any, args: any, context: any) {
   return getList(model, obj, args, context);
 }
 
-function findRelated(rel, obj, args, context) {
+function findRelated(rel, obj, args: any = {}, context) {
   console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
   args.where = {
     [rel.keyTo]: obj[rel.keyFrom],
@@ -102,7 +103,6 @@ function findRelated(rel, obj, args, context) {
   }
   if (rel.type === 'belongsTo') {
     console.log("OBJ:", obj);
-    const args: any = {};
     args.id = obj[rel.keyFrom];
     // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
     return findOne(rel.modelTo, null, args, context);
@@ -110,7 +110,7 @@ function findRelated(rel, obj, args, context) {
   if (rel.type === 'hasMany') {
     findAll(rel.modelTo, obj, args, context).then(list => {
       console.log("EXEC: findRelated: list: ", list);
-      return list
+      return list;
     });
     // return findAll(rel.modelTo, obj, args, context);
   }
