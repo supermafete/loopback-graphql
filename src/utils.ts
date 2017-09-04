@@ -88,7 +88,6 @@ function checkACL(params, modelObject, resObject) {
       debug('[GraphQL] Using role ' + role);
 
       resObject.then((data) => {
-        console.log('DATA', data);
         const promises = [];
         for (let property in modelObject.definition.properties) {
           if (modelObject.definition.properties.hasOwnProperty(property)) {
