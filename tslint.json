@@ -67,11 +67,6 @@
             "check-finally",
             "check-whitespace"
         ],
-        "quotemark": [
-            true,
-            "single",
-            "avoid-escape"
-        ],
         "radix": true,
         "semicolon": [
             true,

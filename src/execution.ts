@@ -8,7 +8,7 @@ import {
 
 function buildSelector(model, args) {
   let selector = {
-    where: args.where || {},
+    where: args.filter || {},
     skip: undefined,
     limit: undefined,
     order: undefined,
@@ -16,9 +16,10 @@ function buildSelector(model, args) {
   const begin = getId(args.after);
   const end = getId(args.before);
 
-  selector.skip = args.first - args.last || 0;
+  // selector.skip = args.first - args.last || 0;
+  selector.skip = args.skip || 0;
   selector.limit = args.last || args.first;
-  selector.order = model.getIdName() + (end ? ' DESC' : ' ASC');
+  selector.order = args.orderBy || (model.getIdName() + (end ? ' DESC' : ' ASC'));
   if (begin) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].gt = begin;
@@ -72,14 +73,17 @@ function getList(model, obj, args, context) {
 }
 
 function upsert(model, args, context) {
-  const accessToken = context.query.access_token;
-  return checkACL({
-    accessToken: accessToken,
-    model: model.definition.name,
-    modelId: '',
-    method: '*',
-    accessType: 'WRITE',
-  }, model, model.upsert(args.obj));
+  console.log("EXEC: upsert: ", model.modelName, args, context);
+  // BUG: Context is undefined
+  return model.upsert(args.obj);
+  // const accessToken = context.query.access_token;
+  // return checkACL({
+  //   accessToken: accessToken,
+  //   model: model.definition.name,
+  //   modelId: '',
+  //   method: '*',
+  //   accessType: 'WRITE',
+  // }, model, model.upsert(args.obj));
 }
 
 function findAll(model: any, obj: any, args: any, context: any) {
