@@ -9,6 +9,7 @@
   "types": "lib/index",
   "scripts": {
     "build": "webpack",
+    "devbuild": "webpack && cp dist/* ../viq-backend-graphql/node_modules/loopback-graphql-checkacl/dist",
     "build:watch": "webpack --watch",
     "pretest": "npm run build && npm run copydata",
     "test": "jest",
