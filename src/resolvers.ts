@@ -15,9 +15,12 @@ const scalarResolvers = {
 };
 
 function RelationResolver(model) {
+  console.log('RES: RelationResolver:  ', model.modelName);
   let resolver = {};
   _.forEach(utils.sharedRelations(model), rel => {
+    console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
     resolver[rel.name] = (obj, args, context) => {
+      console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
       return execution.findRelated(rel, obj, args, context);
     };
   });
@@ -51,45 +54,6 @@ function rootResolver(model) {
   };
 }
 
-function connectionResolver(model: any) {
-  return {
-    [utils.connectionTypeName(model)]: {
-      totalCount: (obj, args, context) => {
-        return obj.count;
-      },
-
-      edges: (obj, args, context) => {
-        return _.map(obj.list, node => {
-          return {
-            cursor: utils.idToCursor(node[model.getIdName()]),
-            node: node,
-          };
-        });
-      },
-
-      [model.pluralModelName.toLowerCase()]: (obj, args, context) => {
-        return obj.list;
-      },
-
-      pageInfo: (obj, args, context) => {
-        let pageInfo = {
-          startCursor: null,
-          endCursor: null,
-          hasPreviousPage: false,
-          hasNextPage: false,
-        };
-        if (obj.count > 0) {
-          pageInfo.startCursor = utils.idToCursor(obj.list[0][model.getIdName()]);
-          pageInfo.endCursor = utils.idToCursor(obj.list[obj.list.length - 1][model.getIdName()]);
-          pageInfo.hasNextPage = obj.list.length === obj.args.limit;
-          pageInfo.hasPreviousPage = obj.list[0][model.getIdName()] !== obj.first[model.getIdName()].toString();
-        }
-        return pageInfo;
-      },
-    },
-  };
-}
-
 function remoteResolver(model) {
   let mutation = {};
   //model.sharedClass.methods
@@ -105,7 +69,7 @@ function remoteResolver(model) {
         mutation[`${utils.methodName(method, model)}`] = (context, args) => {
           let params = [];
           _.each(method.accepts, (el, i) => {
-            params[i] = args[el.arg];
+            params[i] = args[el];
           });
           return model[method.name].apply(model, params);
         };
@@ -129,7 +93,6 @@ export function resolvers(models: any[]) {
       return _.merge(
         obj,
         rootResolver(model),
-        connectionResolver(model),
         RelationResolver(model),
         remoteResolver(model),
       );

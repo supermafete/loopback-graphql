@@ -37,10 +37,6 @@ function getId(cursor) {
   return cursorToId(cursor);
 }
 
-function connectionTypeName(model) {
-  return `${model.modelName}Connection`;
-}
-
 function edgeTypeName(model: any) {
   return `${model.modelName}Edge`; // e.g. UserEdge
 }
@@ -88,6 +84,7 @@ function checkACL(params, modelObject, resObject) {
       debug('[GraphQL] Using role ' + role);
 
       resObject.then((data) => {
+        console.log('DATA', data ? data.id : 'no id');
         const promises = [];
         for (let property in modelObject.definition.properties) {
           if (modelObject.definition.properties.hasOwnProperty(property)) {
@@ -345,7 +342,6 @@ export {
   getId,
   idToCursor,
   cursorToId,
-  connectionTypeName,
   edgeTypeName,
   singularModelName,
   methodName,

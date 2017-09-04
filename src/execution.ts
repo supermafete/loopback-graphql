@@ -2,7 +2,6 @@ import * as _ from 'lodash';
 
 import {
   getId,
-  connectionTypeName,
   idToCursor,
   checkACL,
 } from './utils';
@@ -28,13 +27,14 @@ function buildSelector(model, args) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].lt = end;
   }
+  console.log("EXEC: buildSelector: selector", model.modelName, selector);
   return selector;
 }
 
 function findOne(model, obj, args, context) {
   const accessToken = context.query.access_token;
   let id = obj ? obj[model.getIdName()] : args.id;
-
+  console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
   return checkACL({
     accessToken: accessToken,
     model: model.definition.name,
@@ -49,6 +49,7 @@ function getCount(model, obj, args, context) {
 }
 
 function getFirst(model, obj, args, context) {
+  console.log("EXEC: getFirst", model.modelName, args);
   return model.findOne({
     order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
     where: args.where,
@@ -59,6 +60,7 @@ function getFirst(model, obj, args, context) {
 }
 
 function getList(model, obj, args, context) {
+  console.log("EXEC: getList: ", model.modelName, args);
   const accessToken = context.query.access_token;
   return checkACL({
     accessToken: accessToken,
@@ -81,93 +83,45 @@ function upsert(model, args, context) {
 }
 
 function findAll(model: any, obj: any, args: any, context: any) {
-  const response = {
-    args: args,
-    count: undefined,
-    first: undefined,
-    list: undefined,
-  };
-  return getCount(model, obj, args, context)
-    .then(count => {
-      response.count = count;
-      return getFirst(model, obj, args, context);
-    })
-    .then(first => {
-      response.first = first;
-      return getList(model, obj, args, context);
-    })
-    .then(list => {
-      response.list = list;
-      return response.list;
-    });
+  console.log("findAll", model.modelName, args);
+  return getList(model, obj, args, context);
 }
 
 function findRelated(rel, obj, args, context) {
-  if (rel.type === 'hasOne') {
-    args.id = obj[rel.keyTo];
-    return findOne(rel.modelTo, null, args, context);
-  }
-  if (rel.type === 'hasMany') {
-    const keyTo = rel.keyTo;
-    const id = obj.id;
-    args.where = {};
-    args.where[keyTo] = id;
-
-    return findAll(rel.modelTo, obj, args, context);
-  }
-  if (_.isArray(obj[rel.keyFrom])) {
-    return [];
-  }
+  console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
   args.where = {
     [rel.keyTo]: obj[rel.keyFrom],
   };
-  return findAll(rel.modelTo, obj, args, context);
-}
-
-
-function resolveConnection(model) {
-  return {
-    [connectionTypeName(model)]: {
-      totalCount: (obj, args, context) => {
-        return obj.count;
-      },
-
-      edges: (obj, args, context) => {
-        return _.map(obj.list, node => {
-          return {
-            cursor: idToCursor(node[model.getIdName()]),
-            node: node,
-          };
-        });
-      },
-
-      [model.pluralModelName]: (obj, args, context) => {
-        return obj.list;
-      },
-
-      pageInfo: (obj, args, context) => {
-        let pageInfo = {
-          startCursor: null,
-          endCursor: null,
-          hasPreviousPage: false,
-          hasNextPage: false,
-        };
-        if (obj.count > 0) {
-          pageInfo.startCursor = idToCursor(obj.list[0][model.getIdName()]);
-          pageInfo.endCursor = idToCursor(obj.list[obj.list.length - 1][model.getIdName()]);
-          pageInfo.hasNextPage = obj.list.length === obj.args.limit;
-          pageInfo.hasPreviousPage = obj.list[0][model.getIdName()] !== obj.first[model.getIdName()].toString();
-        }
-        return pageInfo;
-      },
-    },
-  };
+  if (rel.type === 'hasOne') {
+    // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
+    return getFirst(rel.modelTo, obj, args, context);
+  }
+  if (rel.type === 'belongsTo') {
+    console.log("OBJ:", obj);
+    const args: any = {};
+    args.id = obj[rel.keyFrom];
+    // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
+    return findOne(rel.modelTo, null, args, context);
+  }
+  if (rel.type === 'hasMany') {
+    findAll(rel.modelTo, obj, args, context).then(list => {
+      console.log("EXEC: findRelated: list: ", list);
+      return list
+    });
+    // return findAll(rel.modelTo, obj, args, context);
+  }
+  // if (_.isArray(obj[rel.keyFrom])) {
+  //   return [];
+  // }
+  // args.where = {
+  //   [rel.keyTo]: obj[rel.keyFrom],
+  // };
+  // return findAll(rel.modelTo, obj, args, context);
 }
 
 export {
   findAll,
   findOne,
   findRelated,
-  resolveConnection,
   upsert,
 };

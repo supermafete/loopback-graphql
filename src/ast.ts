@@ -1,6 +1,5 @@
 import * as _ from 'lodash';
 import {
-  connectionTypeName,
   singularModelName,
   pluralModelName,
   methodName,
@@ -8,7 +7,7 @@ import {
   sharedRelations,
   idToCursor,
 } from './utils';
-import { findRelated, findAll, findOne, resolveConnection } from './execution';
+import { findRelated, findAll, findOne } from './execution';
 import { IProperty, ITypesHash } from './interfaces';
 
 /*** Loopback Types - GraphQL types
@@ -51,6 +50,7 @@ const SCALARS = {
 };
 
 const PAGINATION = 'where: JSON, after: String, first: Int, before: String, last: Int';
+const FILTER = 'where: JSON';
 const IDPARAMS = 'id: ID!';
 
 function getScalar(type: string) {
@@ -63,7 +63,7 @@ function toTypes(union: string[]) {
   });
 }
 
-function mapProperty(model: any, property: any, modelName: string, propertyName: string) {
+function mapProperty(model: any, property: any, modelName: string, propertyName: any  ) {
   if (property.deprecated) {
     return;
   }
@@ -128,17 +128,28 @@ function mapProperty(model: any, property: any, modelName: string, propertyName:
 }
 
 function mapRelation(rel: any, modelName: string, relName: string) {
-  const relNamePlural = relName + 's';
+  console.log('AST: map Relation', modelName, rel.type, relName );
+  // const relNamePlural = relName + 's';
   if (rel.type === 'hasOne') {
     types[modelName].fields[relName] = {
       relation: true,
       embed: rel.embed,
       gqlType: rel.modelTo.modelName,
-      args: PAGINATION,
+      args: FILTER,
       resolver: (obj, args, context) => {
         return findRelated(rel, obj, args, context);
       },
     };
+  } else if (rel.type === 'belongsTo') {
+      types[modelName].fields[relName] = {
+        relation: true,
+        embed: rel.embed,
+        gqlType: rel.modelTo.modelName,
+        args: FILTER,
+        resolver: (obj, args, context) => {
+          return findRelated(rel, obj, args, context);
+        },
+      };
   } else if (rel.type === 'hasMany') {
       types[modelName].fields[relName] = {
         relation: true,
@@ -151,47 +162,9 @@ function mapRelation(rel: any, modelName: string, relName: string) {
         },
       };
   } else {
-    types[modelName].fields[relName] = {
-      relation: true,
-      embed: rel.embed,
-      gqlType: connectionTypeName(rel.modelTo),
-      args: PAGINATION,
-      resolver: (obj, args, context) => {
-        return findRelated(rel, obj, args, context);
-      },
-    };
+    console.log("NO CONNECTION TYPE RECOGNIZED");
   }
 }
-
-/*
-function generateReturns(name, props) {
-    if (_.isObject(props)) {
-        props = [props];
-    }
-    let args;
-    args = _.map(props, prop => {
-        if (_.isArray(prop.type)) {
-            return `${prop.arg}: [${toType(prop.type[0])}]${prop.required ? '!' : ''}`;
-        } else if (toType(prop.type)) {
-            return `${prop.arg}: ${toType(prop.type)}${prop.required ? '!' : ''}`;
-        }
-        return '';
-    }).join(' \n ');
-    return args ? `{${args}}` : '';
-}
-
-function generateAccepts(name, props) {
-    let ret = _.map(props, prop => {
-        let propType = prop.type;
-        if (_.isArray(prop.type)) {
-            propType = prop.type[0];
-        }
-        return propType ? `${prop.arg}: [${toType(prop.type[0])}]${prop.required ? '!' : ''}` : '';
-    }).join(' \n ');
-    return ret ? `(${ret})` : '';
-
-}
-*/
 
 function addRemoteHooks(model: any) {
 
@@ -290,61 +263,7 @@ function mapRoot(model) {
   addRemoteHooks(model);
 }
 
-function mapConnection(model) {
-  types[connectionTypeName(model)] = {
-    connection: true,
-    category: 'TYPE',
-    fields: {
-      pageInfo: {
-        required: true,
-        gqlType: 'pageInfo',
-      },
-      edges: {
-        list: true,
-        gqlType: edgeTypeName(model),
-        resolver: (obj, args, context) => {
-          return _.map(obj.list, node => {
-            return {
-              cursor: idToCursor(node[model.getIdName()]),
-              node: node,
-            };
-          });
-        },
-      },
-      totalCount: {
-        gqlType: 'Int',
-        scalar: true,
-        resolver: (obj, args, context) => {
-          return obj.count;
-        },
-      },
-      [model.pluralModelName.toLowerCase()]: {
-        gqlType: singularModelName(model),
-        list: true,
-        resolver: (obj, args, context) => {
-          return obj.list;
-        },
-      },
-    },
-    resolver: (obj, args, context) => {
-      return resolveConnection(model);
-    },
-  };
-  types[edgeTypeName(model)] = {
-    category: 'TYPE',
-    fields: {
-      node: {
-        gqlType: singularModelName(model),
-        required: true,
-      },
-      cursor: {
-        gqlType: 'String',
-        required: true,
-      },
-    },
-  };
 
-}
 export function abstractTypes(models: any[]): ITypesHash {
   //building all models types & relationships
   types.pageInfo = {
@@ -388,10 +307,8 @@ export function abstractTypes(models: any[]): ITypesHash {
       mapProperty(model, property, singularModelName(model), key);
     });
 
-    mapConnection(model);
     _.forEach(sharedRelations(model), rel => {
       mapRelation(rel, singularModelName(model), rel.name);
-      mapConnection(rel.modelTo);
     });
   });
   return types;
