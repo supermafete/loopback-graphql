@@ -35,7 +35,7 @@
         "no-conditional-assignment": true,
         "no-consecutive-blank-lines": false,
         "no-console": [
-            true,
+            false,
             "log",
             "debug",
             "info",
@@ -66,11 +66,6 @@
             "check-else",
             "check-finally",
             "check-whitespace"
-        ],
-        "quotemark": [
-            true,
-            "single",
-            "avoid-escape"
         ],
         "radix": true,
         "semicolon": [

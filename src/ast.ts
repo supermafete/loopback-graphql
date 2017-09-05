@@ -49,8 +49,8 @@ const SCALARS = {
   geopoint: 'GeoPoint',
 };
 
-const PAGINATION = 'where: JSON, after: String, first: Int, before: String, last: Int';
-const FILTER = 'where: JSON';
+const PAGINATION = 'filter: JSON, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
+const FILTER = 'filter: JSON';
 const IDPARAMS = 'id: ID!';
 
 function getScalar(type: string) {
