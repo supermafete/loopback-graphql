@@ -15,7 +15,7 @@ function buildSelector(model, args) {
   };
   const begin = getId(args.after);
   const end = getId(args.before);
-  const orderBy = args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC');
+  const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
 
   // selector.skip = args.first - args.last || 0;
   selector.skip = args.skip || 0;
