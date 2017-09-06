@@ -228,7 +228,7 @@ function mapRoot(model) {
     },
   };
 
-  types.Mutation.fields[`save${singularModelName(model)}`] = {
+  types.Mutation.fields[`update${singularModelName(model)}`] = {
     relation: true,
     args: `obj: ${singularModelName(model)}Input!`,
     gqlType: singularModelName(model),
