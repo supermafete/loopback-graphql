@@ -44,6 +44,9 @@ function rootResolver(model) {
       [`update${utils.singularModelName(model)}`]: (context, args) => {
         return execution.upsert(model, args, context);
       },
+      [`create${utils.singularModelName(model)}`]: (context, args) => {
+        return execution.upsert(model, args, context);
+      },
       [`delete${utils.singularModelName(model)}`]: (context, args) => {
         return model.findById(args.id)
           .then(instance => {

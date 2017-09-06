@@ -235,6 +235,13 @@ function mapRoot(model) {
     resolver: (context, args) => model.upsert(args.obj),
   };
 
+  types.Mutation.fields[`create${singularModelName(model)}`] = {
+    relation: true,
+    args: `obj: ${singularModelName(model)}Input!`,
+    gqlType: singularModelName(model),
+    resolver: (context, args) => model.upsert(args.obj),
+  };
+
   types.Mutation.fields[`delete${singularModelName(model)}`] = {
     relation: true,
     args: IDPARAMS,
