@@ -37,13 +37,17 @@ function findOne(model, obj, args, context) {
   const accessToken = context.query.access_token;
   let id = obj ? obj[model.getIdName()] : args.id;
   console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
-  return checkACL({
-    accessToken: accessToken,
-    model: model.definition.name,
-    modelId: id,
-    method: '',
-    accessType: 'READ',
-  }, model, model.findById(id));
+  if (!id) {
+    return null;
+  } else {
+    return checkACL({
+      accessToken: accessToken,
+      model: model.definition.name,
+      modelId: id,
+      method: '',
+      accessType: 'READ',
+    }, model, model.findById(id));
+  }
 }
 
 function getCount(model, obj, args, context) {
