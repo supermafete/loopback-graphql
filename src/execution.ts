@@ -8,7 +8,7 @@ import {
 
 function buildSelector(model, args) {
   let selector = {
-    where: args.filter || {},
+    where: args.filter || args.where || {},
     skip: undefined,
     limit: undefined,
     order: undefined,
