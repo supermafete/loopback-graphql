@@ -112,7 +112,9 @@ function findRelated(rel, obj, args: any = {}, context) {
     return findOne(rel.modelTo, null, args, context);
   }
   if (rel.type === 'hasMany') {
-    return findAll(rel.modelTo, obj, args, context);
+    let mod = new rel.modelFrom(obj);
+    console.log("EXEC: findRelated: rel.name", rel.name, args);
+    return mod[rel.name]({}); //findAll(rel.modelTo, obj, args, context);
   }
   // if (_.isArray(obj[rel.keyFrom])) {
   //   return [];
