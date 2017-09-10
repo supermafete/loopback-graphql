@@ -58,6 +58,18 @@ function rootResolver(model) {
   };
 }
 
+function throughResolver(model) {
+  if (model.modelName.includes('On')) {
+    return {
+      Mutation: {
+        [`addTo${utils.singularModelName(model)}`]: (context, args) => {
+          return execution.upsert(model, args, context);
+        },
+      },
+    };
+  }
+}
+
 function remoteResolver(model) {
   let mutation = {};
   //model.sharedClass.methods
@@ -97,6 +109,7 @@ export function resolvers(models: any[]) {
       return _.merge(
         obj,
         rootResolver(model),
+        throughResolver(model),
         RelationResolver(model),
         remoteResolver(model),
       );

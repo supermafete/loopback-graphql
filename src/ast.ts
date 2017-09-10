@@ -251,6 +251,7 @@ function mapRoot(model) {
         .then(instance => instance.destroy());
     },
   };
+
   // _.each(model.sharedClass.methods, method => {
   //     if (method.accessType !== 'READ' && method.http.path) {
   //         let methodName = methodName(method, model);
@@ -270,6 +271,29 @@ function mapRoot(model) {
   addRemoteHooks(model);
 }
 
+function mapThrough(model) {
+
+  types.Mutation.fields[`addTo${singularModelName(model)}`] = {
+    relation: true,
+    args: `obj: ${singularModelName(model)}Input!`,
+    gqlType: ` ${singularModelName(model)}`,
+    resolver: (context, args) => model.upsert(args.obj),
+  };
+
+  types.Mutation.fields[`removeFrom${singularModelName(model)}`] = {
+    relation: true,
+    args: `obj: ${singularModelName(model)}Input!`,
+    gqlType: ` ${singularModelName(model)}`,
+    resolver: (context, args) => {
+      console.log("AST: removeFrom resolver");
+      // return model.findById(args.id)
+      //   .then(instance => instance.destroy());
+      return null;
+    },
+  };
+
+  // addRemoteHooks(model);
+}
 
 export function abstractTypes(models: any[]): ITypesHash {
   //building all models types & relationships
@@ -304,6 +328,9 @@ export function abstractTypes(models: any[]): ITypesHash {
   _.forEach(models, model => {
     if (model.shared) {
       mapRoot(model);
+    }
+    if (model.modelName.includes('On')) {
+      mapThrough(model);
     }
     types[singularModelName(model)] = {
       category: 'TYPE',
