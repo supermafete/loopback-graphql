@@ -50,9 +50,8 @@ function rootResolver(model) {
       [`delete${utils.singularModelName(model)}`]: (context, args) => {
         return model.findById(args.id)
           .then(instance => {
-            let result = instance;
-            instance.destroy();
-            return instance ? result : null;
+            let deltedInstance = instance;
+            return instance ? instance.destroy().then((res) => deltedInstance ) : null;
           });
       },
     },
