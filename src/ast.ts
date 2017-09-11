@@ -279,7 +279,6 @@ function mapThrough(model) {
   for (let relationKey in relations) {
     if (relationKey) {
       let relation = relations[relationKey];
-      console.log("RELATION", relation);
       mutationArgs[relation.foreignKey] = "ID!",
       mutationArgsStr += relation.foreignKey + `: ID!,`;
     }
@@ -295,14 +294,9 @@ function mapThrough(model) {
 
   types.Mutation.fields[`removeFrom${singularModelName(model)}`] = {
     relation: true,
-    args: `obj: ${singularModelName(model)}Input!`,
+    args: mutationArgsStr,
     gqlType: ` ${singularModelName(model)}`,
-    resolver: (context, args) => {
-      console.log("AST: removeFrom resolver");
-      // return model.findById(args.id)
-      //   .then(instance => instance.destroy());
-      return null;
-    },
+    resolver: (context, args) => model.remove,
   };
 
   // addRemoteHooks(model);
@@ -343,9 +337,6 @@ export function abstractTypes(models: any[]): ITypesHash {
       mapRoot(model);
     }
     if (model.definition.settings.modelThrough) {
-    // if (model.modelName.includes('On')) {
-      console.log("OPTIONS MT", model.definition);
-      console.log("MODEL", model.definition.settings.relations);
       mapThrough(model);
     }
     types[singularModelName(model)] = {

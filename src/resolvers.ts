@@ -65,6 +65,9 @@ function throughResolver(model) {
         [`addTo${utils.singularModelName(model)}`]: (context, args) => {
           return execution.upsert(model, args, context);
         },
+        [`removeFrom${utils.singularModelName(model)}`]: (context, args) => {
+          return execution.remove(model, args, context);
+        },
       },
     };
   }
