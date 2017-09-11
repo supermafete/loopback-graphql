@@ -66,7 +66,12 @@ function throughResolver(model) {
           return execution.upsert(model, args, context);
         },
         [`removeFrom${utils.singularModelName(model)}`]: (context, args) => {
-          return execution.remove(model, args, context);
+          // return execution.remove(model, args, context);
+          return model.find(args)
+            .then(instances => {
+              let deletedInstances = instances;
+              return instances ? model.destroyAll(args).then(res => deletedInstances) : null;
+            });
         },
       },
     };

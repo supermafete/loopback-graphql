@@ -294,6 +294,7 @@ function mapThrough(model) {
 
   types.Mutation.fields[`removeFrom${singularModelName(model)}`] = {
     relation: true,
+    list: true,
     args: mutationArgsStr,
     gqlType: ` ${singularModelName(model)}`,
     resolver: (context, args) => model.remove,
