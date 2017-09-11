@@ -272,12 +272,25 @@ function mapRoot(model) {
 }
 
 function mapThrough(model) {
+  let relations = model.definition.settings.relations;
+  let mutationArgs = {};
+  let mutationArgsStr = '';
+
+  for (let relationKey in relations) {
+    if (relationKey) {
+      let relation = relations[relationKey];
+      console.log("RELATION", relation);
+      mutationArgs[relation.foreignKey] = "ID!",
+      mutationArgsStr += relation.foreignKey + `: ID!,`;
+    }
+  }
+  mutationArgsStr = mutationArgsStr.replace(/,$/, '');
 
   types.Mutation.fields[`addTo${singularModelName(model)}`] = {
     relation: true,
-    args: `obj: ${singularModelName(model)}Input!`,
+    args: mutationArgsStr,
     gqlType: ` ${singularModelName(model)}`,
-    resolver: (context, args) => model.upsert(args.obj),
+    resolver: (context, args) => model.upsert(args),
   };
 
   types.Mutation.fields[`removeFrom${singularModelName(model)}`] = {
@@ -330,6 +343,7 @@ export function abstractTypes(models: any[]): ITypesHash {
       mapRoot(model);
     }
     if (model.modelName.includes('On')) {
+      console.log("MODEL", model.definition.settings.relations);
       mapThrough(model);
     }
     types[singularModelName(model)] = {
