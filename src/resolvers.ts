@@ -59,7 +59,7 @@ function rootResolver(model) {
 }
 
 function throughResolver(model) {
-  if (model.modelName.includes('On')) {
+  if (model.definition.settings.modelThrough) {
     return {
       Mutation: {
         [`addTo${utils.singularModelName(model)}`]: (context, args) => {

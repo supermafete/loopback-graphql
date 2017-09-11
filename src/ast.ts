@@ -342,7 +342,9 @@ export function abstractTypes(models: any[]): ITypesHash {
     if (model.shared) {
       mapRoot(model);
     }
-    if (model.modelName.includes('On')) {
+    if (model.definition.settings.modelThrough) {
+    // if (model.modelName.includes('On')) {
+      console.log("OPTIONS MT", model.definition);
       console.log("MODEL", model.definition.settings.relations);
       mapThrough(model);
     }

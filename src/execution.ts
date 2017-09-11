@@ -80,12 +80,12 @@ function getList(model, obj, args, context) {
 function upsert(model, args, context) {
   console.log("EXEC: upsert: ", model.modelName, args, context);
   // BUG: Context is undefined
-  if (args.obj) {
-    return model.upsert(args.obj);
-  } else { // MUTATION RELATION
-    console.log("UPSERT", args);
+  if (model.definition.settings.modelThrough) {
     return model.upsertWithWhere(args, args);
+  } else {
+    return model.upsert(args.obj);
   }
+
   // const accessToken = context.query.access_token;
   // return checkACL({
   //   accessToken: accessToken,
