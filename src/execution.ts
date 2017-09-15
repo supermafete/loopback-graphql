@@ -130,9 +130,27 @@ function findRelated(rel, obj, args: any = {}, context) {
   // return findAll(rel.modelTo, obj, args, context);
 }
 
+function remove(model, args, context) {
+  model.find(args, (err, instances) => {
+    model.destroyAll(args).then((res) => {
+        return instances;
+    });
+  });
+
+  // const accessToken = context.query.access_token;
+  // return checkACL({
+  //   accessToken: accessToken,
+  //   model: model.definition.name,
+  //   modelId: '',
+  //   method: '*',
+  //   accessType: 'WRITE',
+  // }, model, model.upsert(args.obj));
+}
+
 export {
   findAll,
   findOne,
   findRelated,
   upsert,
+  remove,
 };
