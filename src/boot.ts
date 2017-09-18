@@ -8,7 +8,7 @@ import { resolvers } from './resolvers';
 import { generateTypeDefs } from './typedefs';
 
 export function boot(app, options) {
-  const checkIfAuthenticated = true;
+  const checkIfAuthenticated = options.checkIfAuthenticated;
 
   const models = app.models();
   let types = abstractTypes(models);
