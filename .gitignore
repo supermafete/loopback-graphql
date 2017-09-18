@@ -18,7 +18,6 @@ node_modules
 npm-debug.log
 out
 data
-dist
 build
 package-lock.json
 .gitignore
