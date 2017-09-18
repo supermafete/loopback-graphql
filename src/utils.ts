@@ -138,7 +138,7 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
               if (atErr || !atRes) {
                 res.write(JSON.stringify({
                   error: "Unauthenticated",
-                  data: null
+                  data: null,
                 }));
               } else if (atRes) {
                 res.write(gqlResponse);
