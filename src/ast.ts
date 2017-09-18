@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import {
+  searchModelName,
   singularModelName,
   pluralModelName,
   methodName,
@@ -50,6 +51,7 @@ const SCALARS = {
 };
 
 const PAGINATION = 'filter: JSON, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
+const SEARCH = 'searchTerm: String, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
 const FILTER = 'filter: JSON';
 const IDPARAMS = 'id: ID!';
 
@@ -303,6 +305,20 @@ function mapThrough(model) {
   // addRemoteHooks(model);
 }
 
+function mapSearch(model) {
+
+  types.Query.fields[searchModelName(model)] = {
+    relation: true,
+    root: true,
+    args: SEARCH,
+    list: true,
+    gqlType: singularModelName(model),
+    resolver: (obj, args, context) => {
+      findAll(model, obj, args, context);
+    },
+  };
+}
+
 export function abstractTypes(models: any[]): ITypesHash {
   //building all models types & relationships
   types.pageInfo = {
@@ -339,6 +355,9 @@ export function abstractTypes(models: any[]): ITypesHash {
     }
     if (model.definition.settings.modelThrough) {
       mapThrough(model);
+    }
+    if (model.definition.settings.elasticSearch) {
+      mapSearch(model);
     }
     types[singularModelName(model)] = {
       category: 'TYPE',

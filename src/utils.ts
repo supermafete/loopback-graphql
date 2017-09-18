@@ -50,6 +50,10 @@ function pluralModelName(model: any) {
   return 'all' + _.upperFirst(model.pluralModelName);
 }
 
+function searchModelName(model: any) {
+  return 'search' + _.upperFirst(model.pluralModelName);
+}
+
 function sharedRelations(model: any) {
   return _.pickBy(model.relations, rel => rel.modelTo && rel.modelTo.shared);
 }
@@ -172,6 +176,7 @@ export {
   pluralModelName,
   sharedRelations,
   sharedModels,
+  searchModelName,
   checkACL,
   graphqlExpressIfAuthenticated,
 };

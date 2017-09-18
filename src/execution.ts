@@ -147,10 +147,17 @@ function remove(model, args, context) {
   // }, model, model.upsert(args.obj));
 }
 
+function search(model: any, obj: any, args: any, context: any) {
+  console.log("search", model.modelName, args);
+  // was: return getList(model, obj, args, context);
+  // to be: return model.search(args.searchTerm);
+}
+
 export {
   findAll,
   findOne,
   findRelated,
+  search,
   upsert,
   remove,
 };

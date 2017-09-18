@@ -58,6 +58,18 @@ function rootResolver(model) {
   };
 }
 
+function searchResolver(model) {
+  if (model.definition.settings.elasticSearch) {
+    return {
+      Query: {
+        [`${utils.searchModelName(model)}`]: (obj, args, context) => {
+          return execution.search(model, obj, args, context);
+        },
+      },
+    };
+  }
+}
+
 function throughResolver(model) {
   if (model.definition.settings.modelThrough) {
     return {
@@ -117,6 +129,7 @@ export function resolvers(models: any[]) {
       return _.merge(
         obj,
         rootResolver(model),
+        searchResolver(model),
         throughResolver(model),
         RelationResolver(model),
         remoteResolver(model),
