@@ -1,6 +1,6 @@
 {
   "name": "loopback-graphql-checkacl",
-  "version": "0.30.0",
+  "version": "0.32.0",
   "description": "Add Apollo Server or GraphQL queries on your Loopback server with ACL capabilities",
   "main": "dist/index.js",
   "directories": {
