@@ -393,7 +393,6 @@ exports.remove = remove;
 function search(model, obj, args, context) {
     // was: return getList(model, obj, args, context);
     // to be: return model.search(args.searchTerm);
-    console.log("CONTEXT", context);
     return model.search(args.searchTerm, context);
 }
 exports.search = search;
