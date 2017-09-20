@@ -122,6 +122,10 @@ function pluralModelName(model) {
     return 'all' + _.upperFirst(model.pluralModelName);
 }
 exports.pluralModelName = pluralModelName;
+function searchModelName(model) {
+    return 'search' + _.upperFirst(model.pluralModelName);
+}
+exports.searchModelName = searchModelName;
 function sharedRelations(model) {
     return _.pickBy(model.relations, function (rel) { return rel.modelTo && rel.modelTo.shared; });
 }
@@ -386,6 +390,12 @@ function remove(model, args, context) {
     // }, model, model.upsert(args.obj));
 }
 exports.remove = remove;
+function search(model, obj, args, context) {
+    console.log("search", model.modelName, args);
+    // was: return getList(model, obj, args, context);
+    // to be: return model.search(args.searchTerm);
+}
+exports.search = search;
 
 
 /***/ }),
@@ -484,6 +494,7 @@ var SCALARS = {
     geopoint: 'GeoPoint',
 };
 var PAGINATION = 'filter: JSON, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
+var SEARCH = 'searchTerm: String, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
 var FILTER = 'filter: JSON';
 var IDPARAMS = 'id: ID!';
 function getScalar(type) {
@@ -718,6 +729,18 @@ function mapThrough(model) {
     };
     // addRemoteHooks(model);
 }
+function mapSearch(model) {
+    types.Query.fields[utils_1.searchModelName(model)] = {
+        relation: true,
+        root: true,
+        args: SEARCH,
+        list: true,
+        gqlType: utils_1.singularModelName(model),
+        resolver: function (obj, args, context) {
+            execution_1.findAll(model, obj, args, context);
+        },
+    };
+}
 function abstractTypes(models) {
     //building all models types & relationships
     types.pageInfo = {
@@ -753,6 +776,9 @@ function abstractTypes(models) {
         }
         if (model.definition.settings.modelThrough) {
             mapThrough(model);
+        }
+        if (model.definition.settings.elasticSearch) {
+            mapSearch(model);
         }
         types[utils_1.singularModelName(model)] = {
             category: 'TYPE',
@@ -843,6 +869,18 @@ function rootResolver(model) {
     };
     var _a, _b;
 }
+function searchResolver(model) {
+    if (model.definition.settings.elasticSearch) {
+        return {
+            Query: (_a = {},
+                _a["" + utils.searchModelName(model)] = function (obj, args, context) {
+                    return execution.search(model, obj, args, context);
+                },
+                _a),
+        };
+    }
+    var _a;
+}
 function throughResolver(model) {
     if (model.definition.settings.modelThrough) {
         return {
@@ -898,7 +936,7 @@ function remoteResolver(model) {
 function resolvers(models) {
     return _.reduce(models, function (obj, model) {
         if (model.shared) {
-            return _.merge(obj, rootResolver(model), throughResolver(model), RelationResolver(model), remoteResolver(model));
+            return _.merge(obj, rootResolver(model), searchResolver(model), throughResolver(model), RelationResolver(model), remoteResolver(model));
         }
         return obj;
     }, scalarResolvers);
