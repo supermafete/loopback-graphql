@@ -210,15 +210,15 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
             accessToken.resolve(req.query.access_token, function (atErr, atRes) {
                 res.setHeader('Content-Type', 'application/json');
                 if (atErr || !atRes) {
-                    res.write(JSON.stringify({
+                    res.status(401).send({
                         error: "Unauthenticated",
-                        data: null,
-                    }));
+                        message: "You need to be authenticated to access this resource",
+                    }).end();
                 }
                 else if (atRes) {
                     res.write(gqlResponse);
+                    res.end();
                 }
-                res.end();
             });
         }, function (error) {
             if ('HttpQueryError' !== error.name) {
