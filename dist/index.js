@@ -141,7 +141,9 @@ function methodName(method, model) {
 }
 exports.methodName = methodName;
 function checkACL(params, modelObject, resObject) {
+    var loopback = __webpack_require__(16);
     var AccessToken = modelObject.app.models.AccessToken;
+    var Role = loopback.getModel('Role');
     var notAllowedPromise = new Promise(function (resolve, reject) {
         resolve('Not allowed');
     });
@@ -157,35 +159,38 @@ function checkACL(params, modelObject, resObject) {
             else if (atRes) {
                 role = '$authenticated';
             }
-            debug('[GraphQL] Using role ' + role);
-            resObject.then(function (data) {
-                console.log('DATA', data ? data.id : 'no id');
-                var promises = [];
-                var _loop_1 = function (property) {
-                    if (modelObject.definition.properties.hasOwnProperty(property)) {
-                        promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType, function (checkPermissionErr, checkPermissionRes) {
-                            debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission);
-                            if (checkPermissionRes.permission === 'DENY') {
-                                if (Array.isArray(data)) {
-                                    data.map(function (elem) {
-                                        elem[property] = ['N/A'];
-                                    });
+            Role.isInRole('admin', { principalType: 'USER', principalId: atRes.userId }, function (err, isInRole) {
+                role = (isInRole) ? 'admin' : role;
+                console.log("ROLEW", role);
+                resObject.then(function (data) {
+                    console.log('DATA', data ? data.id : 'no id');
+                    var promises = [];
+                    var _loop_1 = function (property) {
+                        if (modelObject.definition.properties.hasOwnProperty(property)) {
+                            promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType, function (checkPermissionErr, checkPermissionRes) {
+                                debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
+                                if (checkPermissionRes.permission === 'DENY') {
+                                    if (Array.isArray(data)) {
+                                        data.map(function (elem) {
+                                            elem[property] = ['N/A'];
+                                        });
+                                    }
+                                    else {
+                                        data[property] = ['N/A'];
+                                    }
                                 }
-                                else {
-                                    data[property] = ['N/A'];
-                                }
-                            }
-                        }));
-                        Promise.all(promises).then(function (v) {
-                            resolve(new Promise(function (modifiedResponse) {
-                                modifiedResponse(data);
                             }));
-                        });
+                            Promise.all(promises).then(function (v) {
+                                resolve(new Promise(function (modifiedResponse) {
+                                    modifiedResponse(data);
+                                }));
+                            });
+                        }
+                    };
+                    for (var property in modelObject.definition.properties) {
+                        _loop_1(property);
                     }
-                };
-                for (var property in modelObject.definition.properties) {
-                    _loop_1(property);
-                }
+                });
             });
         });
     });
@@ -1038,6 +1043,12 @@ module.exports = require("graphql-tools");
 /***/ (function(module, exports) {
 
 module.exports = require("graphql-type-json");
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+module.exports = require("loopback");
 
 /***/ })
 /******/ ]);
