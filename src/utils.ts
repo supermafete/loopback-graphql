@@ -90,7 +90,7 @@ function checkACL(params, modelObject, resObject) {
         role = '$authenticated';
       }
 
-      Role.isInRole('admin', {principalType: 'USER', principalId: atRes.userId}, (err, isInRole) => {
+      Role.isInRole('admin', {principalType: 'USER', principalId: atRes.userId || null }, (err, isInRole) => {
         role = (isInRole) ? 'admin' : role;
         console.log("ROLEW", role);
 
