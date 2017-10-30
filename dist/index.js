@@ -153,13 +153,15 @@ function checkACL(params, modelObject, resObject) {
     return new Promise(function (resolve, reject) {
         AccessToken.resolve(params.accessToken, function (atErr, atRes) {
             var role = 'everyone';
+            var userId = "0";
             if (atErr || !atRes) {
                 role = '$unauthenticated';
             }
             else if (atRes) {
                 role = '$authenticated';
+                userId = atRes.userId;
             }
-            Role.isInRole('admin', { principalType: 'USER', principalId: atRes.userId || null }, function (err, isInRole) {
+            Role.isInRole('admin', { principalType: 'USER', principalId: userId }, function (err, isInRole) {
                 role = (isInRole) ? 'admin' : role;
                 console.log("ROLEW", role);
                 resObject.then(function (data) {
