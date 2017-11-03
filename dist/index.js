@@ -167,31 +167,22 @@ function checkACL(params, modelObject, resObject) {
                 resObject.then(function (data) {
                     console.log('DATA', data ? data.id : 'no id');
                     var promises = [];
-                    var _loop_1 = function (property) {
-                        if (modelObject.definition.properties.hasOwnProperty(property)) {
-                            promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType, function (checkPermissionErr, checkPermissionRes) {
-                                debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
-                                if (checkPermissionRes.permission === 'DENY') {
-                                    if (Array.isArray(data)) {
-                                        data.map(function (elem) {
-                                            elem[property] = ['N/A'];
-                                        });
-                                    }
-                                    else {
-                                        data[property] = ['N/A'];
-                                    }
-                                }
-                            }));
-                            Promise.all(promises).then(function (v) {
-                                resolve(new Promise(function (modifiedResponse) {
-                                    modifiedResponse(data);
-                                }));
-                            });
+                    promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, function (checkPermissionErr, checkPermissionRes) {
+                        // debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
+                        if (checkPermissionRes.permission === 'DENY') {
+                            data = null;
                         }
-                    };
-                    for (var property in modelObject.definition.properties) {
-                        _loop_1(property);
-                    }
+                    }));
+                    Promise.all(promises).then(function (v) {
+                        resolve(new Promise(function (modifiedResponse) {
+                            modifiedResponse(data);
+                        }));
+                    });
+                    // for (let property in modelObject.definition.properties) {
+                    //   if (modelObject.definition.properties.hasOwnProperty(property)) {
+                    //
+                    //   }
+                    // }
                 });
             });
         });

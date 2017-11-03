@@ -99,31 +99,28 @@ function checkACL(params, modelObject, resObject) {
         resObject.then((data) => {
           console.log('DATA', data ? data.id : 'no id');
           const promises = [];
-          for (let property in modelObject.definition.properties) {
-            if (modelObject.definition.properties.hasOwnProperty(property)) {
-              promises.push(
-                ACL.checkPermission('ROLE', role, modelObject.definition.name, property, params.accessType,
-                (checkPermissionErr, checkPermissionRes) => {
-                  debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
-                  if (checkPermissionRes.permission === 'DENY') {
-                    if (Array.isArray(data)) {
-                       data.map((elem) => {
-                         elem[property] = ['N/A'];
-                       });
-                     } else {
-                       data[property] = ['N/A'];
-                     }
-                  }
-                }),
-              );
 
-              Promise.all(promises).then((v) => {
-                resolve(new Promise((modifiedResponse) => {
-                  modifiedResponse(data);
-                }));
-              });
-            }
-          }
+          promises.push(
+            ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType,
+            (checkPermissionErr, checkPermissionRes) => {
+              // debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
+              if (checkPermissionRes.permission === 'DENY') {
+                data = null;
+              }
+            }),
+          );
+
+          Promise.all(promises).then((v) => {
+            resolve(new Promise((modifiedResponse) => {
+              modifiedResponse(data);
+            }));
+          });
+
+          // for (let property in modelObject.definition.properties) {
+          //   if (modelObject.definition.properties.hasOwnProperty(property)) {
+          //
+          //   }
+          // }
         });
       });
     });
