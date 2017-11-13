@@ -150,7 +150,7 @@ function remove(model, args, context) {
 function search(model: any, obj: any, args: any, context: any) {
   // was: return getList(model, obj, args, context);
   // to be: return model.search(args.searchTerm);
-  return model.search(args.searchTerm, context);
+  return model.search(args, context);
 }
 
 export {

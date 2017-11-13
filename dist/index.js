@@ -391,7 +391,7 @@ exports.remove = remove;
 function search(model, obj, args, context) {
     // was: return getList(model, obj, args, context);
     // to be: return model.search(args.searchTerm);
-    return model.search(args.searchTerm, context);
+    return model.search(args, context);
 }
 exports.search = search;
 
