@@ -74,9 +74,9 @@ module.exports =
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var _ = __webpack_require__(1);
-var graphQLCore = __webpack_require__(12);
-var PAGINATION = '(where: JSON, after: String, first: Int, before: String, last: Int)';
+const _ = __webpack_require__(1);
+const graphQLCore = __webpack_require__(12);
+const PAGINATION = '(where: JSON, after: String, first: Int, before: String, last: Int)';
 exports.PAGINATION = PAGINATION;
 function base64(i) {
     return (new Buffer(i, 'ascii')).toString('base64');
@@ -84,7 +84,7 @@ function base64(i) {
 function unbase64(i) {
     return (new Buffer(i, 'base64')).toString('ascii');
 }
-var PREFIX = 'connection.';
+const PREFIX = 'connection.';
 /**
  * Creates the cursor string from an offset.
  * @param {String} id the id to convert
@@ -111,7 +111,7 @@ function getId(cursor) {
 }
 exports.getId = getId;
 function edgeTypeName(model) {
-    return model.modelName + "Edge"; // e.g. UserEdge
+    return `${model.modelName}Edge`; // e.g. UserEdge
 }
 exports.edgeTypeName = edgeTypeName;
 function singularModelName(model) {
@@ -127,11 +127,11 @@ function searchModelName(model) {
 }
 exports.searchModelName = searchModelName;
 function sharedRelations(model) {
-    return _.pickBy(model.relations, function (rel) { return rel.modelTo && rel.modelTo.shared; });
+    return _.pickBy(model.relations, rel => rel.modelTo && rel.modelTo.shared);
 }
 exports.sharedRelations = sharedRelations;
 function sharedModels(models) {
-    return _.filter(models, function (model) {
+    return _.filter(models, model => {
         return model.shared;
     });
 }
@@ -140,20 +140,26 @@ function methodName(method, model) {
     return model.modelName + _.upperFirst(method.name);
 }
 exports.methodName = methodName;
+function canUserMutate(params) {
+    return new Promise((resolve, reject) => {
+        reject('Not allowed');
+    });
+}
+exports.canUserMutate = canUserMutate;
 function checkACL(params, modelObject, resObject) {
-    var loopback = __webpack_require__(16);
-    var AccessToken = modelObject.app.models.AccessToken;
-    var Role = loopback.getModel('Role');
-    var notAllowedPromise = new Promise(function (resolve, reject) {
+    const loopback = __webpack_require__(16);
+    const AccessToken = modelObject.app.models.AccessToken;
+    const Role = loopback.getModel('Role');
+    const notAllowedPromise = new Promise((resolve, reject) => {
         resolve('Not allowed');
     });
-    var ACL = modelObject.app.models.ACL;
-    var debug = __webpack_require__(9)('loopback:security:acl');
+    const ACL = modelObject.app.models.ACL;
+    const debug = __webpack_require__(9)('loopback:security:acl');
     debug('[GraphQL] Checking ACLs');
-    return new Promise(function (resolve, reject) {
-        AccessToken.resolve(params.accessToken, function (atErr, atRes) {
-            var role = 'everyone';
-            var userId = "0";
+    return new Promise((resolve, reject) => {
+        AccessToken.resolve(params.accessToken, (atErr, atRes) => {
+            let role = 'everyone';
+            let userId = "0";
             if (atErr || !atRes) {
                 role = '$unauthenticated';
             }
@@ -161,20 +167,20 @@ function checkACL(params, modelObject, resObject) {
                 role = '$authenticated';
                 userId = atRes.userId;
             }
-            Role.isInRole('admin', { principalType: 'USER', principalId: userId }, function (err, isInRole) {
+            Role.isInRole('admin', { principalType: 'USER', principalId: userId }, (err, isInRole) => {
                 role = (isInRole) ? 'admin' : role;
                 console.log("ROLEW", role);
-                resObject.then(function (data) {
+                resObject.then((data) => {
                     console.log('DATA', data ? data.id : 'no id');
-                    var promises = [];
-                    promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, function (checkPermissionErr, checkPermissionRes) {
+                    const promises = [];
+                    promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, (checkPermissionErr, checkPermissionRes) => {
                         // debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
                         if (checkPermissionRes.permission === 'DENY') {
                             data = null;
                         }
                     }));
-                    Promise.all(promises).then(function (v) {
-                        resolve(new Promise(function (modifiedResponse) {
+                    Promise.all(promises).then((v) => {
+                        resolve(new Promise((modifiedResponse) => {
                             modifiedResponse(data);
                         }));
                     });
@@ -203,9 +209,9 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
             options: gqlOptions,
             query: req.method === 'POST' ? req.body : req.query,
         }).then(function (gqlResponse) {
-            var accessToken = app.models.AccessToken;
+            const accessToken = app.models.AccessToken;
             console.log("GQL", req.query);
-            accessToken.resolve(req.query.access_token, function (atErr, atRes) {
+            accessToken.resolve(req.query.access_token, (atErr, atRes) => {
                 res.setHeader('Content-Type', 'application/json');
                 if (atErr || !atRes) {
                     res.status(401).send({
@@ -249,17 +255,17 @@ module.exports = require("lodash");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = __webpack_require__(0);
+const utils_1 = __webpack_require__(0);
 function buildSelector(model, args) {
-    var selector = {
+    let selector = {
         where: args.filter || args.where || {},
         skip: undefined,
         limit: undefined,
         order: undefined,
     };
-    var begin = utils_1.getId(args.after);
-    var end = utils_1.getId(args.before);
-    var orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
+    const begin = utils_1.getId(args.after);
+    const end = utils_1.getId(args.before);
+    const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
     // selector.skip = args.first - args.last || 0;
     selector.skip = args.skip || 0;
     selector.limit = args.last || args.first;
@@ -276,8 +282,8 @@ function buildSelector(model, args) {
     return selector;
 }
 function findOne(model, obj, args, context) {
-    var accessToken = context.query.access_token;
-    var id = obj ? obj[model.getIdName()] : args.id;
+    const accessToken = context.query.access_token;
+    let id = obj ? obj[model.getIdName()] : args.id;
     console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
     if (!id) {
         return null;
@@ -302,13 +308,13 @@ function getFirst(model, obj, args, context) {
         order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
         where: args.where,
     })
-        .then(function (res) {
+        .then(res => {
         return res ? res.__data : {};
     });
 }
 function getList(model, obj, args, context) {
     console.log("EXEC: getList: ", model.modelName, args);
-    var accessToken = context.query.access_token;
+    const accessToken = context.query.access_token;
     return utils_1.checkACL({
         accessToken: accessToken,
         model: model.definition.name,
@@ -318,14 +324,27 @@ function getList(model, obj, args, context) {
     }, model, model.find(buildSelector(model, args)));
 }
 function upsert(model, args, context) {
-    console.log("EXEC: upsert: ", model.modelName, args, context);
-    // BUG: Context is undefined
-    if (model.definition.settings.modelThrough) {
-        return model.upsertWithWhere(args, args);
-    }
-    else {
-        return model.upsert(args.obj);
-    }
+    return new Promise((resolve, reject) => {
+        utils_1.canUserMutate({})
+            .then((r) => {
+            console.log("EXEC: upsert: ", model.modelName, args, context);
+            console.log("CANUSERMUTATE");
+            // BUG: Context is undefined
+            if (model.definition.settings.modelThrough) {
+                model.upsertWithWhere(args, args).then((document) => {
+                    resolve(document);
+                });
+            }
+            else {
+                return model.upsert(args.obj).then((document) => {
+                    resolve(document);
+                });
+            }
+        })
+            .catch((e) => {
+            reject(e);
+        });
+    });
     // const accessToken = context.query.access_token;
     // return checkACL({
     //   accessToken: accessToken,
@@ -341,12 +360,11 @@ function findAll(model, obj, args, context) {
     return getList(model, obj, args, context);
 }
 exports.findAll = findAll;
-function findRelated(rel, obj, args, context) {
-    if (args === void 0) { args = {}; }
+function findRelated(rel, obj, args = {}, context) {
     console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
-    args.where = (_a = {},
-        _a[rel.keyTo] = obj[rel.keyFrom],
-        _a);
+    args.where = {
+        [rel.keyTo]: obj[rel.keyFrom],
+    };
     if (rel.type === 'hasOne') {
         // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
         return getFirst(rel.modelTo, obj, args, context);
@@ -358,11 +376,10 @@ function findRelated(rel, obj, args, context) {
         return findOne(rel.modelTo, null, args, context);
     }
     if (rel.type === 'hasMany') {
-        var mod = new rel.modelFrom(obj);
+        let mod = new rel.modelFrom(obj);
         console.log("EXEC: findRelated: rel.name", rel.name, args);
         return mod[rel.name]({}); //findAll(rel.modelTo, obj, args, context);
     }
-    var _a;
     // if (_.isArray(obj[rel.keyFrom])) {
     //   return [];
     // }
@@ -372,20 +389,24 @@ function findRelated(rel, obj, args, context) {
     // return findAll(rel.modelTo, obj, args, context);
 }
 exports.findRelated = findRelated;
-function remove(model, args, context) {
-    model.find(args, function (err, instances) {
-        model.destroyAll(args).then(function (res) {
-            return instances;
+function remove(model, args) {
+    return new Promise((resolve, reject) => {
+        utils_1.canUserMutate({})
+            .then((r) => {
+            console.log("CANUSERMUTATE");
+            model.destroyById(args.id).then((info) => {
+                if (info.count > 0) {
+                    resolve(args);
+                }
+                else {
+                    reject('Delete error for ' + args.id);
+                }
+            });
+        })
+            .catch((e) => {
+            reject(e);
         });
     });
-    // const accessToken = context.query.access_token;
-    // return checkACL({
-    //   accessToken: accessToken,
-    //   model: model.definition.name,
-    //   modelId: '',
-    //   method: '*',
-    //   accessType: 'WRITE',
-    // }, model, model.upsert(args.obj));
 }
 exports.remove = remove;
 function search(model, obj, args, context) {
@@ -403,38 +424,38 @@ exports.search = search;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var graphql_server_express_1 = __webpack_require__(13);
-var graphql_tools_1 = __webpack_require__(14);
-var bodyParser = __webpack_require__(8);
-var utils_1 = __webpack_require__(0);
-var ast_1 = __webpack_require__(4);
-var resolvers_1 = __webpack_require__(6);
-var typedefs_1 = __webpack_require__(7);
+const graphql_server_express_1 = __webpack_require__(13);
+const graphql_tools_1 = __webpack_require__(14);
+const bodyParser = __webpack_require__(8);
+const utils_1 = __webpack_require__(0);
+const ast_1 = __webpack_require__(4);
+const resolvers_1 = __webpack_require__(6);
+const typedefs_1 = __webpack_require__(7);
 function boot(app, options) {
-    var checkIfAuthenticated = options.checkIfAuthenticated;
-    var models = app.models();
-    var types = ast_1.abstractTypes(models);
-    var schema = graphql_tools_1.makeExecutableSchema({
+    const checkIfAuthenticated = options.checkIfAuthenticated;
+    const models = app.models();
+    let types = ast_1.abstractTypes(models);
+    let schema = graphql_tools_1.makeExecutableSchema({
         typeDefs: typedefs_1.generateTypeDefs(types),
         resolvers: resolvers_1.resolvers(models),
         resolverValidationOptions: {
             requireResolversForAllFields: false,
         },
     });
-    var graphiqlPath = options.graphiqlPath || '/graphiql';
-    var path = options.path || '/graphql';
+    let graphiqlPath = options.graphiqlPath || '/graphiql';
+    let path = options.path || '/graphql';
     if (checkIfAuthenticated) {
-        app.use(path, bodyParser.json(), utils_1.graphqlExpressIfAuthenticated(app, function (req) {
+        app.use(path, bodyParser.json(), utils_1.graphqlExpressIfAuthenticated(app, (req) => {
             return {
-                schema: schema,
+                schema,
                 context: req,
             };
         }));
     }
     else {
-        app.use(path, bodyParser.json(), graphql_server_express_1.graphqlExpress(function (req) {
+        app.use(path, bodyParser.json(), graphql_server_express_1.graphqlExpress((req) => {
             return {
-                schema: schema,
+                schema,
                 context: req,
             };
         }));
@@ -453,9 +474,9 @@ exports.boot = boot;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var _ = __webpack_require__(1);
-var utils_1 = __webpack_require__(0);
-var execution_1 = __webpack_require__(2);
+const _ = __webpack_require__(1);
+const utils_1 = __webpack_require__(0);
+const execution_1 = __webpack_require__(2);
 /*** Loopback Types - GraphQL types
         any - JSON
         Array - [JSON]
@@ -468,8 +489,8 @@ var execution_1 = __webpack_require__(2);
         Object = JSON (custom scalar)
         String - string
     ***/
-var types = {};
-var exchangeTypes = {
+let types = {};
+const exchangeTypes = {
     'any': 'JSON',
     'Any': 'JSON',
     'Number': 'Int',
@@ -477,7 +498,7 @@ var exchangeTypes = {
     'Object': 'JSON',
     'object': 'JSON',
 };
-var SCALARS = {
+const SCALARS = {
     any: 'JSON',
     number: 'Float',
     string: 'String',
@@ -491,15 +512,15 @@ var SCALARS = {
     uuidv4: 'ID',
     geopoint: 'GeoPoint',
 };
-var PAGINATION = 'filter: JSON, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
-var SEARCH = 'searchTerm: String, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
-var FILTER = 'filter: JSON';
-var IDPARAMS = 'id: ID!';
+const PAGINATION = 'filter: JSON, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
+const SEARCH = 'searchTerm: String, after: String, first: Int, before: String, last: Int, skip: Int, orderBy: String';
+const FILTER = 'filter: JSON';
+const IDPARAMS = 'id: ID!';
 function getScalar(type) {
     return SCALARS[type.toLowerCase().trim()];
 }
 function toTypes(union) {
-    return _.map(union, function (type) {
+    return _.map(union, type => {
         return getScalar(type) ? getScalar(type) : type;
     });
 }
@@ -511,9 +532,9 @@ function mapProperty(model, property, modelName, propertyName) {
         required: property.required,
         hidden: model.definition.settings.hidden && model.definition.settings.hidden.indexOf(propertyName) !== -1,
     };
-    var currentProperty = types[modelName].fields[propertyName];
-    var typeName = modelName + "_" + propertyName;
-    var propertyType = property.type;
+    let currentProperty = types[modelName].fields[propertyName];
+    let typeName = `${modelName}_${propertyName}`;
+    let propertyType = property.type;
     if (propertyType.name === 'Array') {
         currentProperty.list = true;
         currentProperty.gqlType = 'JSON';
@@ -524,7 +545,7 @@ function mapProperty(model, property, modelName, propertyName) {
         currentProperty.list = true;
         propertyType = property.type[0];
     }
-    var scalar = getScalar(propertyType.name);
+    let scalar = getScalar(propertyType.name);
     if (property.defaultFn) {
         scalar = getScalar(property.defaultFn);
     }
@@ -541,7 +562,7 @@ function mapProperty(model, property, modelName, propertyName) {
     }
     if (propertyType.name === 'ModelConstructor' && property.defaultFn !== 'now') {
         currentProperty.gqlType = propertyType.modelName;
-        var union = propertyType.modelName.split('|');
+        let union = propertyType.modelName.split('|');
         //type is a union
         if (union.length > 1) {
             types[typeName] = {
@@ -556,7 +577,7 @@ function mapProperty(model, property, modelName, propertyName) {
                 input: true,
                 fields: {},
             }; // creating a new type
-            _.forEach(propertyType.definition.properties, function (p, key) {
+            _.forEach(propertyType.definition.properties, (p, key) => {
                 mapProperty(propertyType, p, typeName, key);
             });
         }
@@ -571,7 +592,7 @@ function mapRelation(rel, modelName, relName) {
             embed: rel.embed,
             gqlType: rel.modelTo.modelName,
             args: FILTER,
-            resolver: function (obj, args, context) {
+            resolver: (obj, args, context) => {
                 return execution_1.findRelated(rel, obj, args, context);
             },
         };
@@ -582,7 +603,7 @@ function mapRelation(rel, modelName, relName) {
             embed: rel.embed,
             gqlType: rel.modelTo.modelName,
             args: FILTER,
-            resolver: function (obj, args, context) {
+            resolver: (obj, args, context) => {
                 return execution_1.findRelated(rel, obj, args, context);
             },
         };
@@ -594,7 +615,7 @@ function mapRelation(rel, modelName, relName) {
             list: true,
             gqlType: [rel.modelTo.modelName],
             args: PAGINATION,
-            resolver: function (obj, args, context) {
+            resolver: (obj, args, context) => {
                 return execution_1.findRelated(rel, obj, args, context);
             },
         };
@@ -604,41 +625,41 @@ function mapRelation(rel, modelName, relName) {
     }
 }
 function addRemoteHooks(model) {
-    _.map(model.sharedClass._methods, function (method) {
+    _.map(model.sharedClass._methods, (method) => {
         if (method.accessType !== 'READ' && method.http.path) {
-            var acceptingParams_1 = '', returnType = 'JSON';
+            let acceptingParams = '', returnType = 'JSON';
             method.accepts.map(function (param) {
-                var paramType = '';
+                let paramType = '';
                 if (typeof param.type === 'object') {
                     paramType = 'JSON';
                 }
                 else {
                     if (!SCALARS[param.type.toLowerCase()]) {
-                        paramType = param.type + "Input";
+                        paramType = `${param.type}Input`;
                     }
                     else {
                         paramType = _.upperFirst(param.type);
                     }
                 }
                 if (param.arg) {
-                    acceptingParams_1 += param.arg + ": " + (exchangeTypes[paramType] || paramType) + " ";
+                    acceptingParams += `${param.arg}: ${exchangeTypes[paramType] || paramType} `;
                 }
             });
             if (method.returns && method.returns[0]) {
                 if (!SCALARS[method.returns[0].type] && typeof method.returns[0].type !== 'object') {
-                    returnType = "" + method.returns[0].type;
+                    returnType = `${method.returns[0].type}`;
                 }
                 else {
-                    returnType = "" + _.upperFirst(method.returns[0].type);
+                    returnType = `${_.upperFirst(method.returns[0].type)}`;
                     if (typeof method.returns[0].type === 'object') {
                         returnType = 'JSON';
                     }
                 }
             }
-            types.Mutation.fields["" + utils_1.methodName(method, model)] = {
+            types.Mutation.fields[`${utils_1.methodName(method, model)}`] = {
                 relation: true,
-                args: acceptingParams_1,
-                gqlType: "" + (exchangeTypes[returnType] || returnType),
+                args: acceptingParams,
+                gqlType: `${exchangeTypes[returnType] || returnType}`,
             };
         }
     });
@@ -649,7 +670,7 @@ function mapRoot(model) {
         args: IDPARAMS,
         root: true,
         gqlType: utils_1.singularModelName(model),
-        resolver: function (obj, args, context) {
+        resolver: (obj, args, context) => {
             execution_1.findOne(model, obj, args, context);
         },
     };
@@ -659,29 +680,29 @@ function mapRoot(model) {
         args: PAGINATION,
         list: true,
         gqlType: utils_1.singularModelName(model),
-        resolver: function (obj, args, context) {
+        resolver: (obj, args, context) => {
             execution_1.findAll(model, obj, args, context);
         },
     };
-    types.Mutation.fields["update" + utils_1.singularModelName(model)] = {
+    types.Mutation.fields[`update${utils_1.singularModelName(model)}`] = {
         relation: true,
-        args: "obj: " + utils_1.singularModelName(model) + "Input!",
+        args: `obj: ${utils_1.singularModelName(model)}Input!`,
         gqlType: utils_1.singularModelName(model),
-        resolver: function (context, args) { return model.upsert(args.obj); },
+        resolver: (context, args) => model.upsert(args.obj),
     };
-    types.Mutation.fields["create" + utils_1.singularModelName(model)] = {
+    types.Mutation.fields[`create${utils_1.singularModelName(model)}`] = {
         relation: true,
-        args: "obj: " + utils_1.singularModelName(model) + "Input!",
+        args: `obj: ${utils_1.singularModelName(model)}Input!`,
         gqlType: utils_1.singularModelName(model),
-        resolver: function (context, args) { return model.upsert(args.obj); },
+        resolver: (context, args) => model.upsert(args.obj),
     };
-    types.Mutation.fields["delete" + utils_1.singularModelName(model)] = {
+    types.Mutation.fields[`delete${utils_1.singularModelName(model)}`] = {
         relation: true,
         args: IDPARAMS,
-        gqlType: " " + utils_1.singularModelName(model),
-        resolver: function (context, args) {
+        gqlType: ` ${utils_1.singularModelName(model)}`,
+        resolver: (context, args) => {
             return model.findById(args.id)
-                .then(function (instance) { return instance.destroy(); });
+                .then(instance => instance.destroy());
         },
     };
     // _.each(model.sharedClass.methods, method => {
@@ -701,29 +722,29 @@ function mapRoot(model) {
     addRemoteHooks(model);
 }
 function mapThrough(model) {
-    var relations = model.definition.settings.relations;
-    var mutationArgs = {};
-    var mutationArgsStr = '';
-    for (var relationKey in relations) {
+    let relations = model.definition.settings.relations;
+    let mutationArgs = {};
+    let mutationArgsStr = '';
+    for (let relationKey in relations) {
         if (relationKey) {
-            var relation = relations[relationKey];
+            let relation = relations[relationKey];
             mutationArgs[relation.foreignKey] = "ID!",
-                mutationArgsStr += relation.foreignKey + ": ID!,";
+                mutationArgsStr += relation.foreignKey + `: ID!,`;
         }
     }
     mutationArgsStr = mutationArgsStr.replace(/,$/, '');
-    types.Mutation.fields["addTo" + utils_1.singularModelName(model)] = {
+    types.Mutation.fields[`addTo${utils_1.singularModelName(model)}`] = {
         relation: true,
         args: mutationArgsStr,
-        gqlType: " " + utils_1.singularModelName(model),
-        resolver: function (context, args) { return model.upsert(args); },
+        gqlType: ` ${utils_1.singularModelName(model)}`,
+        resolver: (context, args) => model.upsert(args),
     };
-    types.Mutation.fields["removeFrom" + utils_1.singularModelName(model)] = {
+    types.Mutation.fields[`removeFrom${utils_1.singularModelName(model)}`] = {
         relation: true,
         list: true,
         args: mutationArgsStr,
-        gqlType: " " + utils_1.singularModelName(model),
-        resolver: function (context, args) { return model.remove; },
+        gqlType: ` ${utils_1.singularModelName(model)}`,
+        resolver: (context, args) => model.remove,
     };
     // addRemoteHooks(model);
 }
@@ -734,7 +755,7 @@ function mapSearch(model) {
         args: SEARCH,
         list: true,
         gqlType: utils_1.singularModelName(model),
-        resolver: function (obj, args, context) {
+        resolver: (obj, args, context) => {
             execution_1.findAll(model, obj, args, context);
         },
     };
@@ -768,7 +789,7 @@ function abstractTypes(models) {
         category: 'TYPE',
         fields: {},
     };
-    _.forEach(models, function (model) {
+    _.forEach(models, model => {
         if (model.shared) {
             mapRoot(model);
         }
@@ -783,10 +804,10 @@ function abstractTypes(models) {
             input: true,
             fields: {},
         };
-        _.forEach(model.definition.properties, function (property, key) {
+        _.forEach(model.definition.properties, (property, key) => {
             mapProperty(model, property, utils_1.singularModelName(model), key);
         });
-        _.forEach(utils_1.sharedRelations(model), function (rel) {
+        _.forEach(utils_1.sharedRelations(model), rel => {
             mapRelation(rel, utils_1.singularModelName(model), rel.name);
         });
     });
@@ -802,7 +823,7 @@ exports.abstractTypes = abstractTypes;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var boot_1 = __webpack_require__(3);
+const boot_1 = __webpack_require__(3);
 module.exports = boot_1.boot;
 
 
@@ -813,107 +834,99 @@ module.exports = boot_1.boot;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var _ = __webpack_require__(1);
-var utils = __webpack_require__(0);
-var execution = __webpack_require__(2);
-var GraphQLJSON = __webpack_require__(15);
-var GraphQLDate = __webpack_require__(10);
-var graphql_geojson_1 = __webpack_require__(11);
-var scalarResolvers = {
+const _ = __webpack_require__(1);
+const utils = __webpack_require__(0);
+const execution = __webpack_require__(2);
+const GraphQLJSON = __webpack_require__(15);
+const GraphQLDate = __webpack_require__(10);
+const graphql_geojson_1 = __webpack_require__(11);
+const scalarResolvers = {
     JSON: GraphQLJSON,
     Date: GraphQLDate,
     GeoPoint: graphql_geojson_1.CoordinatesScalar,
 };
 function RelationResolver(model) {
     console.log('RES: RelationResolver:  ', model.modelName);
-    var resolver = {};
-    _.forEach(utils.sharedRelations(model), function (rel) {
+    let resolver = {};
+    _.forEach(utils.sharedRelations(model), rel => {
         console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
-        resolver[rel.name] = function (obj, args, context) {
+        resolver[rel.name] = (obj, args, context) => {
             console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
             return execution.findRelated(rel, obj, args, context);
         };
     });
-    return _a = {},
-        _a[utils.singularModelName(model)] = resolver,
-        _a;
-    var _a;
+    return {
+        [utils.singularModelName(model)]: resolver,
+    };
 }
 function rootResolver(model) {
     return {
-        Query: (_a = {},
-            _a["" + utils.pluralModelName(model)] = function (root, args, context) {
+        Query: {
+            [`${utils.pluralModelName(model)}`]: (root, args, context) => {
                 return execution.findAll(model, root, args, context);
             },
-            _a["" + utils.singularModelName(model)] = function (obj, args, context) {
+            [`${utils.singularModelName(model)}`]: (obj, args, context) => {
                 return execution.findOne(model, obj, args, context);
             },
-            _a),
-        Mutation: (_b = {},
-            _b["update" + utils.singularModelName(model)] = function (context, args) {
+        },
+        Mutation: {
+            [`update${utils.singularModelName(model)}`]: (context, args) => {
                 return execution.upsert(model, args, context);
             },
-            _b["create" + utils.singularModelName(model)] = function (context, args) {
+            [`create${utils.singularModelName(model)}`]: (context, args) => {
                 return execution.upsert(model, args, context);
             },
-            _b["delete" + utils.singularModelName(model)] = function (context, args) {
-                return model.findById(args.id)
-                    .then(function (instance) {
-                    var deltedInstance = instance;
-                    return instance ? instance.destroy().then(function (res) { return deltedInstance; }) : null;
-                });
+            [`delete${utils.singularModelName(model)}`]: (context, args) => {
+                return execution.remove(model, args);
             },
-            _b),
+        },
     };
-    var _a, _b;
 }
 function searchResolver(model) {
     if (model.definition.settings.elasticSearch) {
         return {
-            Query: (_a = {},
-                _a["" + utils.searchModelName(model)] = function (obj, args, context) {
+            Query: {
+                [`${utils.searchModelName(model)}`]: (obj, args, context) => {
                     return execution.search(model, obj, args, context);
                 },
-                _a),
+            },
         };
     }
-    var _a;
 }
 function throughResolver(model) {
     if (model.definition.settings.modelThrough) {
         return {
-            Mutation: (_a = {},
-                _a["addTo" + utils.singularModelName(model)] = function (context, args) {
+            Mutation: {
+                [`addTo${utils.singularModelName(model)}`]: (context, args) => {
                     return execution.upsert(model, args, context);
                 },
-                _a["removeFrom" + utils.singularModelName(model)] = function (context, args) {
+                [`removeFrom${utils.singularModelName(model)}`]: (context, args) => {
                     // return execution.remove(model, args, context);
                     return model.find(args)
-                        .then(function (instances) {
-                        var deletedInstances = instances;
-                        return instances ? model.destroyAll(args).then(function (res) { return deletedInstances; }) : null;
+                        .then(instances => {
+                        let deletedInstances = instances;
+                        return instances ? model.destroyAll(args).then(res => deletedInstances) : null;
                     });
                 },
-                _a),
+            },
         };
     }
-    var _a;
 }
 function remoteResolver(model) {
-    var mutation = {};
+    let mutation = {};
     //model.sharedClass.methods
     if (model.sharedClass && model.sharedClass.methods) {
         model.sharedClass._methods.map(function (method) {
             if (method.accessType !== 'READ' && method.http.path) {
-                var acceptingParams_1 = [];
+                let acceptingParams = [];
                 method.accepts.map(function (param) {
                     if (param.arg) {
-                        acceptingParams_1.push(param.arg);
+                        acceptingParams.push(param.arg);
                     }
                 });
-                mutation["" + utils.methodName(method, model)] = function (context, args) {
-                    var params = [];
-                    _.each(method.accepts, function (el, i) {
+                mutation[`${utils.methodName(method, model)}`] = (context, args) => {
+                    let params = [];
+                    _.each(method.accepts, (el, i) => {
                         params[i] = args[el];
                     });
                     return model[method.name].apply(model, params);
@@ -932,7 +945,7 @@ function remoteResolver(model) {
  * @returns {Object} resolvers functions for all models - queries and mutations
  */
 function resolvers(models) {
-    return _.reduce(models, function (obj, model) {
+    return _.reduce(models, (obj, model) => {
         if (model.shared) {
             return _.merge(obj, rootResolver(model), searchResolver(model), throughResolver(model), RelationResolver(model), remoteResolver(model));
         }
@@ -949,40 +962,51 @@ exports.resolvers = resolvers;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var _ = __webpack_require__(1);
-var scalarTypes = "\n        scalar Date\n        scalar JSON\n        scalar GeoPoint\n        ";
+const _ = __webpack_require__(1);
+const scalarTypes = `
+        scalar Date
+        scalar JSON
+        scalar GeoPoint
+        `;
 function args(args) {
-    return args ? "(" + args + ")" : '';
+    return args ? `(${args})` : '';
 }
 function generateInputField(field, name) {
-    return "\n        " + name + " : " + (field.list ? '[' : '') + "\n        " + field.gqlType + (field.scalar ? '' : 'Input') + (field.required ? '!' : '') + " " + (field.list ? ']' : '');
+    return `
+        ${name} : ${field.list ? '[' : ''}
+        ${field.gqlType}${field.scalar ? '' : 'Input'}${field.required ? '!' : ''} ${field.list ? ']' : ''}`;
 }
 function generateOutputField(field, name) {
-    return name + " " + args(field.args) + " : " + (field.list ? '[' : '') + field.gqlType + (field.required ? '!' : '') + " " + (field.list ? ']' : '');
+    return `${name} ${args(field.args)} : ${field.list ? '[' : ''}${field.gqlType}${field.required ? '!' : ''} ${field.list ? ']' : ''}`;
 }
 function generateTypeDefs(types) {
-    var categories = {
-        TYPE: function (type, name) {
-            var output = _.reduce(type.fields, function (result, field, fieldName) {
+    const categories = {
+        TYPE: (type, name) => {
+            let output = _.reduce(type.fields, (result, field, fieldName) => {
                 return result + generateOutputField(field, fieldName) + ' \n ';
             }, '');
-            var result = "\n                type " + name + " {\n                    " + output + "\n                }";
+            let result = `
+                type ${name} {
+                    ${output}
+                }`;
             if (type.input) {
-                var input = _.reduce(type.fields, function (accumulator, field, fieldName) {
+                let input = _.reduce(type.fields, (accumulator, field, fieldName) => {
                     return !field.relation ? accumulator + generateInputField(field, fieldName) + ' \n ' : accumulator;
                 }, '');
-                result += "input " + name + "Input {\n                    " + input + "\n                }";
+                result += `input ${name}Input {
+                    ${input}
+                }`;
             }
             return result;
         },
-        UNION: function (type, name) {
-            return "union " + name + " = " + type.values.join(' | ');
+        UNION: (type, name) => {
+            return `union ${name} = ${type.values.join(' | ')}`;
         },
-        ENUM: function (type, name) {
-            return "enum " + name + " {" + type.values.join(' ') + "}";
+        ENUM: (type, name) => {
+            return `enum ${name} {${type.values.join(' ')}}`;
         },
     };
-    return _.reduce(types, function (result, type, name) {
+    return _.reduce(types, (result, type, name) => {
         return result + categories[type.category](type, name);
     }, scalarTypes);
 }

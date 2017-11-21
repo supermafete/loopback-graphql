@@ -48,11 +48,7 @@ function rootResolver(model) {
         return execution.upsert(model, args, context);
       },
       [`delete${utils.singularModelName(model)}`]: (context, args) => {
-        return model.findById(args.id)
-          .then(instance => {
-            let deltedInstance = instance;
-            return instance ? instance.destroy().then((res) => deltedInstance ) : null;
-          });
+        return execution.remove(model, args);
       },
     },
   };

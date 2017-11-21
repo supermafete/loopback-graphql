@@ -79,22 +79,26 @@ function getList(model, obj, args, context) {
 }
 
 function upsert(model, args, context) {
-  canUserMutate({})
-    .then((r) => {
-      console.log("EXEC: upsert: ", model.modelName, args, context);
-      console.log("CANUSERMUTATE");
-      // BUG: Context is undefined
-      if (model.definition.settings.modelThrough) {
-        return model.upsertWithWhere(args, args);
-      } else {
-        return model.upsert(args.obj);
-      }
-    })
-    .catch((e) => {
-      return new Promise((resolve, reject) => {
-        resolve('Not allowed');
+  return new Promise((resolve, reject) => {
+    canUserMutate({})
+      .then((r) => {
+        console.log("EXEC: upsert: ", model.modelName, args, context);
+        console.log("CANUSERMUTATE");
+        // BUG: Context is undefined
+        if (model.definition.settings.modelThrough) {
+          model.upsertWithWhere(args, args).then((document) => {
+            resolve(document);
+          });
+        } else {
+          return model.upsert(args.obj).then((document) => {
+            resolve(document);
+          });
+        }
+      })
+      .catch((e) => {
+        reject(e);
       });
-    });
+  });
 
   // const accessToken = context.query.access_token;
   // return checkACL({
@@ -140,31 +144,23 @@ function findRelated(rel, obj, args: any = {}, context) {
   // return findAll(rel.modelTo, obj, args, context);
 }
 
-function remove(model, args, context) {
-  canUserMutate({})
-    .then((r) => {
-      console.log("CANUSERMUTATE");
-      model.find(args, (err, instances) => {
-        model.destroyAll(args).then((res) => {
-            return instances;
+function remove(model, args) {
+  return new Promise((resolve, reject) => {
+    canUserMutate({})
+      .then((r) => {
+        console.log("CANUSERMUTATE");
+        model.destroyById(args.id).then((info) => {
+          if (info.count > 0) {
+            resolve(args);
+          } else {
+            reject('Delete error for ' + args.id);
+          }
         });
-      });
-    })
-    .catch((e) => {
-      return new Promise((resolve, reject) => {
-        resolve('Not allowed');
-      });
+      })
+      .catch((e) => {
+        reject(e);
+       });
     });
-
-
-  // const accessToken = context.query.access_token;
-  // return checkACL({
-  //   accessToken: accessToken,
-  //   model: model.definition.name,
-  //   modelId: '',
-  //   method: '*',
-  //   accessType: 'WRITE',
-  // }, model, model.upsert(args.obj));
 }
 
 function search(model: any, obj: any, args: any, context: any) {

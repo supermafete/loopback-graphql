@@ -70,7 +70,8 @@ function methodName(method, model) {
 
 function canUserMutate(params) {
   return new Promise((resolve, reject) => {
-    resolve();
+    resolve()
+    // reject('Not allowed');
   });
 }
 
@@ -191,4 +192,5 @@ export {
   searchModelName,
   checkACL,
   graphqlExpressIfAuthenticated,
+  canUserMutate
 };
