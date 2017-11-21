@@ -15,12 +15,12 @@ const scalarResolvers = {
 };
 
 function RelationResolver(model) {
-  console.log('RES: RelationResolver:  ', model.modelName);
+  // console.log('RES: RelationResolver:  ', model.modelName);
   let resolver = {};
   _.forEach(utils.sharedRelations(model), rel => {
-    console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
+    // console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
     resolver[rel.name] = (obj, args, context) => {
-      console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
+      // console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
       return execution.findRelated(rel, obj, args, context);
     };
   });

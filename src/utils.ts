@@ -89,7 +89,6 @@ function canUserMutate(params, modelObject) {
 
         ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType,
         (checkPermissionErr, checkPermissionRes) => {
-          console.log("PEPE", checkPermissionRes.permission);
           if (checkPermissionRes.permission === 'DENY') {
             reject(new Error('Not allowed'));
           } else if (checkPermissionErr) {
@@ -131,16 +130,13 @@ function checkACL(params, modelObject, resObject) {
 
       Role.isInRole('admin', {principalType: 'USER', principalId: userId }, (err, isInRole) => {
         role = (isInRole) ? 'admin' : role;
-        console.log("ROLEW", role);
 
         resObject.then((data) => {
-          console.log('DATA', data ? data.id : 'no id');
           const promises = [];
 
           promises.push(
             ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType,
             (checkPermissionErr, checkPermissionRes) => {
-              // debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
               if (checkPermissionRes.permission === 'DENY') {
                 data = null;
               }
@@ -179,7 +175,7 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
             query: req.method === 'POST' ? req.body : req.query,
         }).then(function (gqlResponse) {
             const accessToken = app.models.AccessToken;
-            console.log("GQL", req.query);
+            // console.log("GQL", req.query);
             accessToken.resolve(req.query.access_token, (atErr, atRes) => {
               res.setHeader('Content-Type', 'application/json');
               if (atErr || !atRes) {

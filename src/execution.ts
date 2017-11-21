@@ -30,14 +30,12 @@ function buildSelector(model, args) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].lt = end;
   }
-  console.log("EXEC: buildSelector: selector", model.modelName, selector);
   return selector;
 }
 
 function findOne(model, obj, args, context) {
   const accessToken = context.query.access_token;
   let id = obj ? obj[model.getIdName()] : args.id;
-  console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
   if (!id) {
     return null;
   } else {
@@ -56,7 +54,6 @@ function getCount(model, obj, args, context) {
 }
 
 function getFirst(model, obj, args, context) {
-  console.log("EXEC: getFirst", model.modelName, args);
   return model.findOne({
     order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
     where: args.where,
@@ -67,7 +64,6 @@ function getFirst(model, obj, args, context) {
 }
 
 function getList(model, obj, args, context) {
-  console.log("EXEC: getList: ", model.modelName, args);
   const accessToken = context.query.access_token;
   return checkACL({
     accessToken: accessToken,
@@ -88,8 +84,6 @@ function upsert(model, args, context) {
   return new Promise((resolve, reject) => {
     canUserMutate(params, model)
       .then((r) => {
-        console.log("EXEC: upsert: ", model.modelName, args, context);
-        console.log("CANUSERMUTATE");
         // BUG: Context is undefined
         if (model.definition.settings.modelThrough) {
           model.upsertWithWhere(args, args).then((document) => {
@@ -117,12 +111,10 @@ function upsert(model, args, context) {
 }
 
 function findAll(model: any, obj: any, args: any, context: any) {
-  console.log("findAll", model.modelName, args);
   return getList(model, obj, args, context);
 }
 
 function findRelated(rel, obj, args: any = {}, context) {
-  console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
   args.where = {
     [rel.keyTo]: obj[rel.keyFrom],
   };
@@ -131,14 +123,12 @@ function findRelated(rel, obj, args: any = {}, context) {
     return getFirst(rel.modelTo, obj, args, context);
   }
   if (rel.type === 'belongsTo') {
-    console.log("OBJ:", obj);
     args.id = obj[rel.keyFrom];
     // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
     return findOne(rel.modelTo, null, args, context);
   }
   if (rel.type === 'hasMany') {
     let mod = new rel.modelFrom(obj);
-    console.log("EXEC: findRelated: rel.name", rel.name, args);
     return mod[rel.name]({}); //findAll(rel.modelTo, obj, args, context);
   }
   // if (_.isArray(obj[rel.keyFrom])) {
@@ -160,12 +150,11 @@ function remove(model, args, context) {
   return new Promise((resolve, reject) => {
     canUserMutate(params, model)
       .then((r) => {
-        console.log("CANUSERMUTATE");
         model.destroyById(args.id).then((info) => {
           if (info.count > 0) {
             resolve(args);
           } else {
-            reject('Delete error for ' + args.id);
+            reject(new Error('Delete error for ' + args.id));
           }
         });
       })

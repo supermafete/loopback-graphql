@@ -158,7 +158,6 @@ function canUserMutate(params, modelObject) {
             Role.isInRole('admin', { principalType: 'USER', principalId: userId }, (err, isInRole) => {
                 role = (isInRole) ? 'admin' : role;
                 ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, (checkPermissionErr, checkPermissionRes) => {
-                    console.log("PEPE", checkPermissionRes.permission);
                     if (checkPermissionRes.permission === 'DENY') {
                         reject(new Error('Not allowed'));
                     }
@@ -199,12 +198,9 @@ function checkACL(params, modelObject, resObject) {
             }
             Role.isInRole('admin', { principalType: 'USER', principalId: userId }, (err, isInRole) => {
                 role = (isInRole) ? 'admin' : role;
-                console.log("ROLEW", role);
                 resObject.then((data) => {
-                    console.log('DATA', data ? data.id : 'no id');
                     const promises = [];
                     promises.push(ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, (checkPermissionErr, checkPermissionRes) => {
-                        // debug('[GraphQL] Permission for ' + modelObject.definition.name + '.' + property + ' is ' + checkPermissionRes.permission + ' for role ' + role);
                         if (checkPermissionRes.permission === 'DENY') {
                             data = null;
                         }
@@ -240,7 +236,7 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
             query: req.method === 'POST' ? req.body : req.query,
         }).then(function (gqlResponse) {
             const accessToken = app.models.AccessToken;
-            console.log("GQL", req.query);
+            // console.log("GQL", req.query);
             accessToken.resolve(req.query.access_token, (atErr, atRes) => {
                 res.setHeader('Content-Type', 'application/json');
                 if (atErr || !atRes) {
@@ -308,13 +304,11 @@ function buildSelector(model, args) {
         selector.where[model.getIdName()] = selector[model.getIdName()] || {};
         selector.where[model.getIdName()].lt = end;
     }
-    console.log("EXEC: buildSelector: selector", model.modelName, selector);
     return selector;
 }
 function findOne(model, obj, args, context) {
     const accessToken = context.query.access_token;
     let id = obj ? obj[model.getIdName()] : args.id;
-    console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
     if (!id) {
         return null;
     }
@@ -333,7 +327,6 @@ function getCount(model, obj, args, context) {
     return model.count(args.where);
 }
 function getFirst(model, obj, args, context) {
-    console.log("EXEC: getFirst", model.modelName, args);
     return model.findOne({
         order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
         where: args.where,
@@ -343,7 +336,6 @@ function getFirst(model, obj, args, context) {
     });
 }
 function getList(model, obj, args, context) {
-    console.log("EXEC: getList: ", model.modelName, args);
     const accessToken = context.query.access_token;
     return utils_1.checkACL({
         accessToken: accessToken,
@@ -362,8 +354,6 @@ function upsert(model, args, context) {
     return new Promise((resolve, reject) => {
         utils_1.canUserMutate(params, model)
             .then((r) => {
-            console.log("EXEC: upsert: ", model.modelName, args, context);
-            console.log("CANUSERMUTATE");
             // BUG: Context is undefined
             if (model.definition.settings.modelThrough) {
                 model.upsertWithWhere(args, args).then((document) => {
@@ -391,12 +381,10 @@ function upsert(model, args, context) {
 }
 exports.upsert = upsert;
 function findAll(model, obj, args, context) {
-    console.log("findAll", model.modelName, args);
     return getList(model, obj, args, context);
 }
 exports.findAll = findAll;
 function findRelated(rel, obj, args = {}, context) {
-    console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
     args.where = {
         [rel.keyTo]: obj[rel.keyFrom],
     };
@@ -405,14 +393,12 @@ function findRelated(rel, obj, args = {}, context) {
         return getFirst(rel.modelTo, obj, args, context);
     }
     if (rel.type === 'belongsTo') {
-        console.log("OBJ:", obj);
         args.id = obj[rel.keyFrom];
         // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
         return findOne(rel.modelTo, null, args, context);
     }
     if (rel.type === 'hasMany') {
         let mod = new rel.modelFrom(obj);
-        console.log("EXEC: findRelated: rel.name", rel.name, args);
         return mod[rel.name]({}); //findAll(rel.modelTo, obj, args, context);
     }
     // if (_.isArray(obj[rel.keyFrom])) {
@@ -433,13 +419,12 @@ function remove(model, args, context) {
     return new Promise((resolve, reject) => {
         utils_1.canUserMutate(params, model)
             .then((r) => {
-            console.log("CANUSERMUTATE");
             model.destroyById(args.id).then((info) => {
                 if (info.count > 0) {
                     resolve(args);
                 }
                 else {
-                    reject('Delete error for ' + args.id);
+                    reject(new Error('Delete error for ' + args.id));
                 }
             });
         })
@@ -886,12 +871,12 @@ const scalarResolvers = {
     GeoPoint: graphql_geojson_1.CoordinatesScalar,
 };
 function RelationResolver(model) {
-    console.log('RES: RelationResolver:  ', model.modelName);
+    // console.log('RES: RelationResolver:  ', model.modelName);
     let resolver = {};
     _.forEach(utils.sharedRelations(model), rel => {
-        console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
+        // console.log('RES: RelationResolver: sharedRelations: ', model.modelName, rel.type, rel.name);
         resolver[rel.name] = (obj, args, context) => {
-            console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
+            // console.log('RES: RelationResolver Execution: ', rel.name, obj.id, args);
             return execution.findRelated(rel, obj, args, context);
         };
     });
