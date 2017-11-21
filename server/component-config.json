@@ -1,6 +1,6 @@
 {
-    "loopback-component-explorer": {
-        "mountPath": "/explorer"
-    },
-    "../build/index.js": {}
+  "loopback-component-explorer": {
+    "mountPath": "/explorer"
+  },
+  "../dist/index.js": {}
 }

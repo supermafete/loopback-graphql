@@ -2,23 +2,25 @@ import * as _ from 'lodash';
 
 import {
   getId,
-  connectionTypeName,
   idToCursor,
+  checkACL,
 } from './utils';
 
 function buildSelector(model, args) {
   let selector = {
-    where: args.where || {},
+    where: args.filter || args.where || {},
     skip: undefined,
     limit: undefined,
     order: undefined,
   };
   const begin = getId(args.after);
   const end = getId(args.before);
+  const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
 
-  selector.skip = args.first - args.last || 0;
+  // selector.skip = args.first - args.last || 0;
+  selector.skip = args.skip || 0;
   selector.limit = args.last || args.first;
-  selector.order = model.getIdName() + (end ? ' DESC' : ' ASC');
+  selector.order =  orderBy || (model.getIdName() + (end ? ' DESC' : ' ASC'));
   if (begin) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].gt = begin;
@@ -27,107 +29,135 @@ function buildSelector(model, args) {
     selector.where[model.getIdName()] = selector[model.getIdName()] || {};
     selector.where[model.getIdName()].lt = end;
   }
+  console.log("EXEC: buildSelector: selector", model.modelName, selector);
   return selector;
 }
 
-function findOne(model, obj, args /*, context*/) {
+function findOne(model, obj, args, context) {
+  const accessToken = context.query.access_token;
   let id = obj ? obj[model.getIdName()] : args.id;
-  return model.findById(id);
+  console.log("EXEC: findOne: modelName and id: ", model.modelName, id);
+  if (!id) {
+    return null;
+  } else {
+    return checkACL({
+      accessToken: accessToken,
+      model: model.definition.name,
+      modelId: id,
+      method: '',
+      accessType: 'READ',
+    }, model, model.findById(id));
+  }
 }
 
 function getCount(model, obj, args, context) {
-  return model.count(args.where, obj, context);
+  return model.count(args.where);
 }
 
-function getFirst(model, obj, args) {
+function getFirst(model, obj, args, context) {
+  console.log("EXEC: getFirst", model.modelName, args);
   return model.findOne({
     order: model.getIdName() + (args.before ? ' DESC' : ' ASC'),
     where: args.where,
-  }, obj)
+  })
     .then(res => {
       return res ? res.__data : {};
     });
 }
 
-function getList(model, args) {
-  return model.find(buildSelector(model, args));
+function getList(model, obj, args, context) {
+  console.log("EXEC: getList: ", model.modelName, args);
+  const accessToken = context.query.access_token;
+  return checkACL({
+    accessToken: accessToken,
+    model: model.definition.name,
+    modelId: '',
+    method: '',
+    accessType: 'READ',
+  }, model, model.find(buildSelector(model, args)));
 }
 
-function findAll(model: any, obj: any, args: any) {
-  const response = {
-    args: args,
-    count: undefined,
-    first: undefined,
-    list: undefined,
-  };
-  return getCount(model, obj, args, undefined)
-    .then(count => {
-      response.count = count;
-      return getFirst(model, obj, args);
-    })
-    .then(first => {
-      response.first = first;
-      return getList(model, args);
-    })
-    .then(list => {
-      response.list = list;
-      return response;
-    });
-}
-
-function findRelated(rel, obj, args) {
-  if (_.isArray(obj[rel.keyFrom])) {
-    return [];
+function upsert(model, args, context) {
+  console.log("EXEC: upsert: ", model.modelName, args, context);
+  // BUG: Context is undefined
+  if (model.definition.settings.modelThrough) {
+    return model.upsertWithWhere(args, args);
+  } else {
+    return model.upsert(args.obj);
   }
+
+  // const accessToken = context.query.access_token;
+  // return checkACL({
+  //   accessToken: accessToken,
+  //   model: model.definition.name,
+  //   modelId: '',
+  //   method: '*',
+  //   accessType: 'WRITE',
+  // }, model, model.upsert(args.obj));
+}
+
+function findAll(model: any, obj: any, args: any, context: any) {
+  console.log("findAll", model.modelName, args);
+  return getList(model, obj, args, context);
+}
+
+function findRelated(rel, obj, args: any = {}, context) {
+  console.log('EXEC: findRelated: REL:', rel.modelFrom.modelName, rel.keyFrom, rel.type, rel.modelTo.modelName, rel.keyTo, args);
   args.where = {
     [rel.keyTo]: obj[rel.keyFrom],
   };
-  return findAll(rel.modelTo, obj, args);
-
+  if (rel.type === 'hasOne') {
+    // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
+    return getFirst(rel.modelTo, obj, args, context);
+  }
+  if (rel.type === 'belongsTo') {
+    console.log("OBJ:", obj);
+    args.id = obj[rel.keyFrom];
+    // rel.modelFrom[rel.modelTo.modelName]((err, res) => console.log('rel resulr', err, res));
+    return findOne(rel.modelTo, null, args, context);
+  }
+  if (rel.type === 'hasMany') {
+    let mod = new rel.modelFrom(obj);
+    console.log("EXEC: findRelated: rel.name", rel.name, args);
+    return mod[rel.name]({}); //findAll(rel.modelTo, obj, args, context);
+  }
+  // if (_.isArray(obj[rel.keyFrom])) {
+  //   return [];
+  // }
+  // args.where = {
+  //   [rel.keyTo]: obj[rel.keyFrom],
+  // };
+  // return findAll(rel.modelTo, obj, args, context);
 }
 
-function resolveConnection(model) {
-  return {
-    [connectionTypeName(model)]: {
-      totalCount: (obj) => {
-        return obj.count;
-      },
+function remove(model, args, context) {
+  model.find(args, (err, instances) => {
+    model.destroyAll(args).then((res) => {
+        return instances;
+    });
+  });
 
-      edges: (obj) => {
-        return _.map(obj.list, node => {
-          return {
-            cursor: idToCursor(node[model.getIdName()]),
-            node: node,
-          };
-        });
-      },
+  // const accessToken = context.query.access_token;
+  // return checkACL({
+  //   accessToken: accessToken,
+  //   model: model.definition.name,
+  //   modelId: '',
+  //   method: '*',
+  //   accessType: 'WRITE',
+  // }, model, model.upsert(args.obj));
+}
 
-      [model.pluralModelName]: (obj) => {
-        return obj.list;
-      },
-
-      pageInfo: (obj) => {
-        let pageInfo = {
-          startCursor: null,
-          endCursor: null,
-          hasPreviousPage: false,
-          hasNextPage: false,
-        };
-        if (obj.count > 0) {
-          pageInfo.startCursor = idToCursor(obj.list[0][model.getIdName()]);
-          pageInfo.endCursor = idToCursor(obj.list[obj.list.length - 1][model.getIdName()]);
-          pageInfo.hasNextPage = obj.list.length === obj.args.limit;
-          pageInfo.hasPreviousPage = obj.list[0][model.getIdName()] !== obj.first[model.getIdName()].toString();
-        }
-        return pageInfo;
-      },
-    },
-  };
+function search(model: any, obj: any, args: any, context: any) {
+  // was: return getList(model, obj, args, context);
+  // to be: return model.search(args.searchTerm);
+  return model.search(args, context);
 }
 
 export {
   findAll,
   findOne,
   findRelated,
-  resolveConnection,
+  search,
+  upsert,
+  remove,
 };
