@@ -4,6 +4,7 @@ import {
   getId,
   idToCursor,
   checkACL,
+  canUserMutate,
 } from './utils';
 
 function buildSelector(model, args) {
@@ -78,13 +79,22 @@ function getList(model, obj, args, context) {
 }
 
 function upsert(model, args, context) {
-  console.log("EXEC: upsert: ", model.modelName, args, context);
-  // BUG: Context is undefined
-  if (model.definition.settings.modelThrough) {
-    return model.upsertWithWhere(args, args);
-  } else {
-    return model.upsert(args.obj);
-  }
+  canUserMutate({})
+    .then((r) => {
+      console.log("EXEC: upsert: ", model.modelName, args, context);
+      console.log("CANUSERMUTATE");
+      // BUG: Context is undefined
+      if (model.definition.settings.modelThrough) {
+        return model.upsertWithWhere(args, args);
+      } else {
+        return model.upsert(args.obj);
+      }
+    })
+    .catch((e) => {
+      return new Promise((resolve, reject) => {
+        resolve('Not allowed');
+      });
+    });
 
   // const accessToken = context.query.access_token;
   // return checkACL({
@@ -131,11 +141,21 @@ function findRelated(rel, obj, args: any = {}, context) {
 }
 
 function remove(model, args, context) {
-  model.find(args, (err, instances) => {
-    model.destroyAll(args).then((res) => {
-        return instances;
+  canUserMutate({})
+    .then((r) => {
+      console.log("CANUSERMUTATE");
+      model.find(args, (err, instances) => {
+        model.destroyAll(args).then((res) => {
+            return instances;
+        });
+      });
+    })
+    .catch((e) => {
+      return new Promise((resolve, reject) => {
+        resolve('Not allowed');
+      });
     });
-  });
+
 
   // const accessToken = context.query.access_token;
   // return checkACL({

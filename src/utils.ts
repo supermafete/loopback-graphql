@@ -68,6 +68,12 @@ function methodName(method, model) {
   return model.modelName + _.upperFirst(method.name);
 }
 
+function canUserMutate(params) {
+  return new Promise((resolve, reject) => {
+    resolve();
+  });
+}
+
 function checkACL(params, modelObject, resObject) {
   const loopback = require('loopback');
 
