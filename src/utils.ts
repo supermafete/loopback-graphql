@@ -68,9 +68,39 @@ function methodName(method, model) {
   return model.modelName + _.upperFirst(method.name);
 }
 
-function canUserMutate(params) {
+function canUserMutate(params, modelObject) {
+  const AccessToken = modelObject.app.models.AccessToken;
+  const Role = modelObject.app.models.Role;
+  const ACL = modelObject.app.models.ACL;
+
   return new Promise((resolve, reject) => {
-    resolve()
+    AccessToken.resolve(params.accessToken, (atErr, atRes) => {
+      let role = 'everyone';
+      let userId = "0";
+      if (atErr || !atRes) {
+        role = '$unauthenticated';
+      } else if (atRes) {
+        role = '$authenticated';
+        userId = atRes.userId;
+      }
+
+      Role.isInRole('admin', {principalType: 'USER', principalId: userId }, (err, isInRole) => {
+        role = (isInRole) ? 'admin' : role;
+
+        ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType,
+        (checkPermissionErr, checkPermissionRes) => {
+          console.log("PEPE", checkPermissionRes.permission);
+          if (checkPermissionRes.permission === 'DENY') {
+            reject(new Error('Not allowed'));
+          } else if (checkPermissionErr) {
+            reject(checkPermissionErr);
+          } else if (checkPermissionRes.permission === 'ALLOW') {
+            resolve();
+          }
+        });
+      });
+    });
+    // resolve()
     // reject('Not allowed');
   });
 }

@@ -140,9 +140,39 @@ function methodName(method, model) {
     return model.modelName + _.upperFirst(method.name);
 }
 exports.methodName = methodName;
-function canUserMutate(params) {
+function canUserMutate(params, modelObject) {
+    const AccessToken = modelObject.app.models.AccessToken;
+    const Role = modelObject.app.models.Role;
+    const ACL = modelObject.app.models.ACL;
     return new Promise((resolve, reject) => {
-        reject('Not allowed');
+        AccessToken.resolve(params.accessToken, (atErr, atRes) => {
+            let role = 'everyone';
+            let userId = "0";
+            if (atErr || !atRes) {
+                role = '$unauthenticated';
+            }
+            else if (atRes) {
+                role = '$authenticated';
+                userId = atRes.userId;
+            }
+            Role.isInRole('admin', { principalType: 'USER', principalId: userId }, (err, isInRole) => {
+                role = (isInRole) ? 'admin' : role;
+                ACL.checkPermission('ROLE', role, modelObject.definition.name, '*', params.accessType, (checkPermissionErr, checkPermissionRes) => {
+                    console.log("PEPE", checkPermissionRes.permission);
+                    if (checkPermissionRes.permission === 'DENY') {
+                        reject(new Error('Not allowed'));
+                    }
+                    else if (checkPermissionErr) {
+                        reject(checkPermissionErr);
+                    }
+                    else if (checkPermissionRes.permission === 'ALLOW') {
+                        resolve();
+                    }
+                });
+            });
+        });
+        // resolve()
+        // reject('Not allowed');
     });
 }
 exports.canUserMutate = canUserMutate;
@@ -324,8 +354,13 @@ function getList(model, obj, args, context) {
     }, model, model.find(buildSelector(model, args)));
 }
 function upsert(model, args, context) {
+    const accessToken = context.query.access_token;
+    let params = {
+        accessToken: context.query.access_token,
+        accessType: "WRITE"
+    };
     return new Promise((resolve, reject) => {
-        utils_1.canUserMutate({})
+        utils_1.canUserMutate(params, model)
             .then((r) => {
             console.log("EXEC: upsert: ", model.modelName, args, context);
             console.log("CANUSERMUTATE");
@@ -389,9 +424,14 @@ function findRelated(rel, obj, args = {}, context) {
     // return findAll(rel.modelTo, obj, args, context);
 }
 exports.findRelated = findRelated;
-function remove(model, args) {
+function remove(model, args, context) {
+    const accessToken = context.query.access_token;
+    let params = {
+        accessToken: context.query.access_token,
+        accessType: "WRITE"
+    };
     return new Promise((resolve, reject) => {
-        utils_1.canUserMutate({})
+        utils_1.canUserMutate(params, model)
             .then((r) => {
             console.log("CANUSERMUTATE");
             model.destroyById(args.id).then((info) => {
@@ -870,14 +910,14 @@ function rootResolver(model) {
             },
         },
         Mutation: {
-            [`update${utils.singularModelName(model)}`]: (context, args) => {
+            [`update${utils.singularModelName(model)}`]: (obj, args, context) => {
                 return execution.upsert(model, args, context);
             },
-            [`create${utils.singularModelName(model)}`]: (context, args) => {
+            [`create${utils.singularModelName(model)}`]: (obj, args, context) => {
                 return execution.upsert(model, args, context);
             },
-            [`delete${utils.singularModelName(model)}`]: (context, args) => {
-                return execution.remove(model, args);
+            [`delete${utils.singularModelName(model)}`]: (obj, args, context) => {
+                return execution.remove(model, args, context);
             },
         },
     };

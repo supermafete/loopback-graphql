@@ -41,14 +41,14 @@ function rootResolver(model) {
       },
     },
     Mutation: {
-      [`update${utils.singularModelName(model)}`]: (context, args) => {
+      [`update${utils.singularModelName(model)}`]: (obj, args, context) => {
         return execution.upsert(model, args, context);
       },
-      [`create${utils.singularModelName(model)}`]: (context, args) => {
+      [`create${utils.singularModelName(model)}`]: (obj, args, context) => {
         return execution.upsert(model, args, context);
       },
-      [`delete${utils.singularModelName(model)}`]: (context, args) => {
-        return execution.remove(model, args);
+      [`delete${utils.singularModelName(model)}`]: (obj, args, context) => {
+        return execution.remove(model, args, context);
       },
     },
   };

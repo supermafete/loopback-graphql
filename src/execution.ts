@@ -79,8 +79,14 @@ function getList(model, obj, args, context) {
 }
 
 function upsert(model, args, context) {
+  const accessToken = context.query.access_token;
+  let params = {
+    accessToken: context.query.access_token,
+    accessType: "WRITE"
+  }
+
   return new Promise((resolve, reject) => {
-    canUserMutate({})
+    canUserMutate(params, model)
       .then((r) => {
         console.log("EXEC: upsert: ", model.modelName, args, context);
         console.log("CANUSERMUTATE");
@@ -144,9 +150,15 @@ function findRelated(rel, obj, args: any = {}, context) {
   // return findAll(rel.modelTo, obj, args, context);
 }
 
-function remove(model, args) {
+function remove(model, args, context) {
+  const accessToken = context.query.access_token;
+  let params = {
+    accessToken: context.query.access_token,
+    accessType: "WRITE"
+  }
+
   return new Promise((resolve, reject) => {
-    canUserMutate({})
+    canUserMutate(params, model)
       .then((r) => {
         console.log("CANUSERMUTATE");
         model.destroyById(args.id).then((info) => {
