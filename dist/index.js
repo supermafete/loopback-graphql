@@ -419,12 +419,12 @@ function remove(model, args, context) {
     return new Promise((resolve, reject) => {
         utils_1.canUserMutate(params, model)
             .then((r) => {
-            model.destroyById(args.id).then((info) => {
-                if (info.count > 0) {
+            model.destroyById(args.id).then((err) => {
+                if (!err) {
                     resolve(args);
                 }
                 else {
-                    reject(new Error('Delete error for ' + args.id));
+                    reject(err);
                 }
             });
         })
