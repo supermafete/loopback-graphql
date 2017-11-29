@@ -762,7 +762,7 @@ function mapThrough(model) {
         relation: true,
         args: mutationArgsStr,
         gqlType: ` ${utils_1.singularModelName(model)}`,
-        resolver: (context, args) => { model.upsert(args); },
+        resolver: (context, args) => model.upsert(args),
     };
     types.Mutation.fields[`removeFrom${utils_1.singularModelName(model)}`] = {
         relation: true,
