@@ -762,7 +762,7 @@ function mapThrough(model) {
         relation: true,
         args: mutationArgsStr,
         gqlType: ` ${utils_1.singularModelName(model)}`,
-        resolver: (context, args) => model.upsert(args),
+        resolver: (context, args) => { model.upsert(args); },
     };
     types.Mutation.fields[`removeFrom${utils_1.singularModelName(model)}`] = {
         relation: true,
@@ -922,10 +922,10 @@ function throughResolver(model) {
     if (model.definition.settings.modelThrough) {
         return {
             Mutation: {
-                [`addTo${utils.singularModelName(model)}`]: (context, args) => {
+                [`addTo${utils.singularModelName(model)}`]: (obj, args, context) => {
                     return execution.upsert(model, args, context);
                 },
-                [`removeFrom${utils.singularModelName(model)}`]: (context, args) => {
+                [`removeFrom${utils.singularModelName(model)}`]: (obj, args, context) => {
                     // return execution.remove(model, args, context);
                     return model.find(args)
                         .then(instances => {

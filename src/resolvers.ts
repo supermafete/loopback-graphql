@@ -70,10 +70,10 @@ function throughResolver(model) {
   if (model.definition.settings.modelThrough) {
     return {
       Mutation: {
-        [`addTo${utils.singularModelName(model)}`]: (context, args) => {
+        [`addTo${utils.singularModelName(model)}`]: (obj, args, context) => {
           return execution.upsert(model, args, context);
         },
-        [`removeFrom${utils.singularModelName(model)}`]: (context, args) => {
+        [`removeFrom${utils.singularModelName(model)}`]: (obj, args, context) => {
           // return execution.remove(model, args, context);
           return model.find(args)
             .then(instances => {
