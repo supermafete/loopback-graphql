@@ -150,11 +150,13 @@ function remove(model, args, context) {
   return new Promise((resolve, reject) => {
     canUserMutate(params, model)
       .then((r) => {
-        model.destroyById(args.id).then((err) => {
-          if (!err) {
-            resolve(args);
-          } else {
+        model.destroyById(args.id, (err) => {
+          console.log("ERR", err);
+          if (err) {
             reject(err);
+          } else {
+            console.log("ARGS", args);
+            resolve(args);
           }
         });
       })
