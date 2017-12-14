@@ -236,8 +236,8 @@ function graphqlExpressIfAuthenticated(app, gqlOptions) {
             query: req.method === 'POST' ? req.body : req.query,
         }).then(function (gqlResponse) {
             const accessToken = app.models.AccessToken;
-            // console.log("GQL", req.query);
-            accessToken.resolve(req.query.access_token, (atErr, atRes) => {
+            // console.log("GQL", req);
+            accessToken.resolve(req.body.access_token || req.query.access_token, (atErr, atRes) => {
                 res.setHeader('Content-Type', 'application/json');
                 if (atErr || !atRes) {
                     res.status(401).send({
