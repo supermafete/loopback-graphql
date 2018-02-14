@@ -291,7 +291,16 @@ function buildSelector(model, args) {
     };
     const begin = utils_1.getId(args.after);
     const end = utils_1.getId(args.before);
-    const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
+    // const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
+    let orderBy = null;
+    if (args.orderBy) {
+        try {
+            orderBy = JSON.parse(args.orderBy);
+        }
+        catch (error) {
+            orderBy = args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC');
+        }
+    }
     // selector.skip = args.first - args.last || 0;
     selector.skip = args.skip || 0;
     selector.limit = args.last || args.first;
