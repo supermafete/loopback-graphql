@@ -9,11 +9,12 @@ import {
 
 function buildSelector(model, args) {
   let selector = {
-      where: JSON.parse(JSON.stringify(args.filter)) || JSON.parse(JSON.stringify(args.where)) || {},
+      where: args.filter || args.where || {},
       skip: undefined,
       limit: undefined,
       order: undefined,
   };
+  selector.where = JSON.parse(JSON.stringify(selector.where));
   const begin = getId(args.after);
   const end = getId(args.before);
   // const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;

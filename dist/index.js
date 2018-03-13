@@ -284,11 +284,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = __webpack_require__(0);
 function buildSelector(model, args) {
     let selector = {
-        where: JSON.parse(JSON.stringify(args.filter)) || JSON.parse(JSON.stringify(args.where)) || {},
+        where: args.filter || args.where || {},
         skip: undefined,
         limit: undefined,
         order: undefined,
     };
+    selector.where = JSON.parse(JSON.stringify(selector.where));
     const begin = utils_1.getId(args.after);
     const end = utils_1.getId(args.before);
     // const orderBy = (args.orderBy) ? args.orderBy.replace('_DESC', ' DESC').replace('_ASC', ' ASC') : null;
