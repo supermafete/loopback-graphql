@@ -284,7 +284,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = __webpack_require__(0);
 function buildSelector(model, args) {
     let selector = {
-        where: args.filter || args.where || {},
+        where: Object.assign({}, args.filter) || Object.assign({}, args.where) || {},
         skip: undefined,
         limit: undefined,
         order: undefined,

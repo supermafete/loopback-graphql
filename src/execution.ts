@@ -9,7 +9,7 @@ import {
 
 function buildSelector(model, args) {
   let selector = {
-    where: args.filter || args.where || {},
+    where: {...args.filter} || {...args.where} || {},
     skip: undefined,
     limit: undefined,
     order: undefined,
