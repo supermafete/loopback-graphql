@@ -9,10 +9,10 @@ import {
 
 function buildSelector(model, args) {
   let selector = {
-    where: {...args.filter} || {...args.where} || {},
-    skip: undefined,
-    limit: undefined,
-    order: undefined,
+      where: JSON.parse(JSON.stringify(args.filter)) || JSON.parse(JSON.stringify(args.where)) || {},
+      skip: undefined,
+      limit: undefined,
+      order: undefined,
   };
   const begin = getId(args.after);
   const end = getId(args.before);
